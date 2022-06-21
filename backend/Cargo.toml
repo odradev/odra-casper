@@ -1,0 +1,19 @@
+[package]
+name = "casper_backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+odra = { path = "../../odra/core" }
+casper-contract = { version = "1.4.4", features = ["std"] }
+casper-commons = { path = "../common" }
+proc-macro2 = "1.0.39"
+quote = "1.0.18"
+syn = "1.0.96"
+hex = "0.4.3"
+convert_case = "0.5.0"
+
+[features]
+default = [ "codegen", "backend" ]
+codegen = []
+backend = []

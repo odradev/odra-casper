@@ -1,0 +1,7 @@
+[package]
+name = "casper-commons"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+odra = { path = "../../odra/core" }
