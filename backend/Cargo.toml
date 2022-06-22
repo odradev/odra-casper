@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-odra = { path = "../../odra/core" }
+odra = { path = "../../odra/core", default-features = false, features = [ "wasm" ] }
 casper-contract = { version = "1.4.4", features = ["std"] }
 casper-commons = { path = "../common" }
 proc-macro2 = "1.0.39"

@@ -3,10 +3,10 @@ use odra::contract_def::ContractDef;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 
-use self::{entrypoint::WasmEntrypoint, parser::ContractEntrypoints};
+use self::{entrypoints::WasmEntrypoint, call::ContractEntrypoints};
 
-mod parser;
-mod entrypoint;
+mod call;
+mod entrypoints;
 
 pub fn gen_contract(contract_def: ContractDef) -> TokenStream2 {
     let entrypoints = generate_entrypoints(&contract_def);

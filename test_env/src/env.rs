@@ -6,9 +6,9 @@ use casper_engine_test_support::{
     DEFAULT_ACCOUNT_INITIAL_BALANCE, DEFAULT_GENESIS_CONFIG, DEFAULT_GENESIS_CONFIG_HASH,
     DEFAULT_PAYMENT,
 };
-use casper_execution_engine::core::engine_state::{
+use casper_execution_engine::{core::engine_state::{
     run_genesis_request::RunGenesisRequest, GenesisAccount,
-};
+}};
 use casper_types::{
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},
@@ -91,7 +91,7 @@ impl CasperTestEnv {
         entry_point: &str,
         args: RuntimeArgs,
         has_return: bool,
-    ) -> Option<Vec<u8>> {
+    ) -> Option<Bytes> {
         let session_code = PathBuf::from("getter_proxy.wasm");
 
         let args_bytes: Vec<u8> = args.to_bytes().unwrap();
@@ -119,8 +119,8 @@ impl CasperTestEnv {
 
         let result = if has_return {
             let result: Bytes = self.get_account_value(active_account, "result");
-            Some(result.to_vec())
-            // Some(casper_types::bytesrepr::deserialize(result.to_vec()).unwrap())
+            dbg!(&result);
+            Some(result)
         } else {
             None
         };

@@ -1,8 +1,8 @@
-use casper_types::RuntimeArgs;
-use convert_case::{Casing, Case};
+use casper_types::{RuntimeArgs, bytesrepr::Bytes};
 use odra::types::Address;
-use odra_test_env::ContractContainer;
+use odra::ContractContainer;
 use utils::OdraAddressWrapper;
+use crate::env::ENV;
 
 pub mod env;
 mod utils;
@@ -14,11 +14,11 @@ fn backend_name() -> String {
 
 #[no_mangle]
 fn register_contract(container: &ContractContainer) -> Address {
-    crate::env::ENV.with(|env| {
+    ENV.with(|env| {
         env.borrow_mut()
             .deploy_contract(container.wasm_path.as_str(), RuntimeArgs::new());
 
-        let contract_package_hash = format!("{}_package_hash", container.name).to_case(Case::Snake);
+        let contract_package_hash = format!("{}_package_hash", container.name);
         let wrapped_address: OdraAddressWrapper = env
             .borrow()
             .get_contract_package_hash(&contract_package_hash)
@@ -33,8 +33,8 @@ pub fn call_contract(
     entrypoint: &str,
     args: &RuntimeArgs,
     has_return: bool,
-) -> Option<Vec<u8>> {
-    crate::env::ENV.with(|env| {
+) -> Option<Bytes> {
+    ENV.with(|env| {
         let contract_hash = OdraAddressWrapper(addr.to_owned()).into();
         env.borrow_mut()
             .call_contract(contract_hash, entrypoint, args.to_owned(), has_return)

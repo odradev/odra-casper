@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-odra = { path = "../../odra/core" }
+odra = { path = "../../odra/core", default-features = false }

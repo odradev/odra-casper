@@ -1,8 +1,7 @@
-use odra::contract_def::Entrypoint;
-use quote::{ToTokens, format_ident, quote};
+use odra::contract_def::{Entrypoint, Argument};
+use proc_macro2::TokenStream;
+use quote::{ToTokens, format_ident, quote, TokenStreamExt};
 use syn::{self, punctuated::Punctuated, token::Comma, Ident};
-
-use super::parser::CasperArgs;
 
 pub(crate) struct WasmEntrypoint<'a>(pub &'a Entrypoint, pub &'a Ident);
 
@@ -32,11 +31,27 @@ impl<'a> ToTokens for WasmEntrypoint<'a> {
         tokens.extend(quote! {
             #[no_mangle]
             fn #entrypoint_ident() {
-                //TODO: somehow pass a fully qualified path
-                let contract = #contract_ident::instance("contract");
+                //TODO: do not hardcode the path, somehow pass a fully qualified path
+                let contract = sample_contract::#contract_ident::instance("contract");
                 #args
                 #contract_call
             }
+        });
+    }
+}
+
+struct CasperArgs<'a>(pub &'a Vec<Argument>);
+
+impl ToTokens for CasperArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.0;
+
+        args.iter().for_each(|arg| {
+            let arg_ident = format_ident!("{}", arg.ident);
+
+            tokens.append_all(quote! {
+                let #arg_ident = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg(stringify!(#arg_ident));
+            });
         });
     }
 }

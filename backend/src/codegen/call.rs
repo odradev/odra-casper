@@ -5,23 +5,36 @@ use odra::{
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
-pub(crate) struct CasperArgs<'a>(pub &'a Vec<Argument>);
+pub(crate) struct ContractEntrypoints<'a>(pub &'a Vec<Entrypoint>);
 
-impl ToTokens for CasperArgs<'_> {
+impl ToTokens for ContractEntrypoints<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let args = self.0;
-
-        args.iter().for_each(|arg| {
-            let arg_ident = format_ident!("{}", arg.ident);
-
-            tokens.append_all(quote! {
-                let #arg_ident = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg(stringify!(#arg_ident));
-            });
-        });
+        tokens.extend(quote!(let mut entry_points = odra::types::EntryPoints::new();));
+        tokens.append_all(self.0.iter().map(|ep| ContractEntrypoints::build_entry_point(ep)));
     }
 }
 
-pub(crate) struct WrappedType<'a>(pub &'a CLType);
+impl ContractEntrypoints<'_> {
+    fn build_entry_point(entrypoint: &Entrypoint) -> TokenStream {
+        let entrypoint_ident = format_ident!("{}", entrypoint.ident);
+        let params = EntrypointParams(&entrypoint.args);
+        let ret = WrappedType(&entrypoint.ret);
+
+        quote! {
+            entry_points.add_entry_point(
+                odra::types::EntryPoint::new(
+                    stringify!(#entrypoint_ident),
+                    #params,
+                    #ret,
+                    odra::types::EntryPointAccess::Public,
+                    odra::types::EntryPointType::Contract,
+                )
+            );
+        }
+    }
+}
+
+struct WrappedType<'a>(pub &'a CLType);
 
 impl ToTokens for WrappedType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
@@ -48,50 +61,22 @@ impl ToTokens for WrappedType<'_> {
     }
 }
 
-pub(crate) struct ContractEntrypoints<'a>(pub &'a Vec<Entrypoint>);
-
-impl ToTokens for ContractEntrypoints<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.extend(quote!(let mut entry_points = odra::types::EntryPoints::new();));
-        tokens.append_all(self.0.iter().map(|ep| ContractEntrypoints::build_entry_point(ep)));
-    }
-}
-
-impl ContractEntrypoints<'_> {
-    fn build_entry_point(entrypoint: &Entrypoint) -> TokenStream {
-        let entrypoint_ident = format_ident!("{}", entrypoint.ident);
-        let params = EntrypointParams(&entrypoint.args).to_token_stream();
-        let ret = WrappedType(&entrypoint.ret).to_token_stream();
-
-        quote! {
-            entry_points.add_entry_point(
-                odra::types::EntryPoint::new(
-                    stringify!(#entrypoint_ident),
-                    #params,
-                    #ret,
-                    odra::types::EntryPointAccess::Public,
-                    odra::types::EntryPointType::Contract,
-                )
-            );
-        }
-    }
-}
-
-pub(crate) struct EntrypointParams<'a>(pub &'a Vec<Argument>);
+struct EntrypointParams<'a>(pub &'a Vec<Argument>);
 
 impl ToTokens for EntrypointParams<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.0.is_empty() {
             tokens.extend(quote!(Vec::<odra::types::Parameter>::new()));
         } else {
-            let mut params_content = TokenStream::new();
-            self.0.iter().for_each(|arg| {
-                let arg_ident = format_ident!("{}", arg.ident);
-                let ty = WrappedType(&arg.ty).to_token_stream();
-                params_content.extend(
-                    quote!(params.push(odra::types::Parameter::new(stringify!(#arg_ident), #ty));),
-                );
-            });
+            let params_content = self.0
+                .iter()
+                .map(|arg| {
+                    let arg_ident = format_ident!("{}", arg.ident);
+                    let ty = WrappedType(&arg.ty);
+                    quote!(params.push(odra::types::Parameter::new(stringify!(#arg_ident), #ty));)
+                })
+                .flatten()
+                .collect::<TokenStream>();
 
             let params = quote! {
                 {
