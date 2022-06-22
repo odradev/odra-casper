@@ -97,7 +97,7 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 name = "casper-commons"
 version = "0.1.0"
 dependencies = [
- "odra 0.1.0",
+ "odra-types",
 ]
 
 [[package]]
@@ -229,7 +229,7 @@ dependencies = [
  "casper-contract",
  "convert_case",
  "hex",
- "odra 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
  "syn 1.0.98",
@@ -243,7 +243,7 @@ dependencies = [
  "casper-engine-test-support",
  "casper-execution-engine",
  "casper-types",
- "odra 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra",
 ]
 
 [[package]]
@@ -844,53 +844,22 @@ dependencies = [
 [[package]]
 name = "odra"
 version = "0.1.0"
-dependencies = [
- "cfg-if 1.0.0",
- "odra-proc-macros 0.1.0",
- "odra-types 0.1.0",
- "ref_thread_local",
-]
-
-[[package]]
-name = "odra"
-version = "0.1.0"
 source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
 dependencies = [
  "cfg-if 1.0.0",
- "odra-proc-macros 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra-proc-macros",
  "odra-test-env",
  "odra-test-env-wrapper",
- "odra-types 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra-types",
  "ref_thread_local",
 ]
 
 [[package]]
 name = "odra-codegen"
 version = "0.1.0"
-dependencies = [
- "odra-ir 0.1.0",
- "proc-macro-error",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
-]
-
-[[package]]
-name = "odra-codegen"
-version = "0.1.0"
 source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
 dependencies = [
- "odra-ir 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
- "proc-macro-error",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
-]
-
-[[package]]
-name = "odra-ir"
-version = "0.1.0"
-dependencies = [
+ "odra-ir",
  "proc-macro-error",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
@@ -911,21 +880,10 @@ dependencies = [
 [[package]]
 name = "odra-proc-macros"
 version = "0.1.0"
-dependencies = [
- "odra-codegen 0.1.0",
- "odra-ir 0.1.0",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
-]
-
-[[package]]
-name = "odra-proc-macros"
-version = "0.1.0"
 source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
 dependencies = [
- "odra-codegen 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
- "odra-ir 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra-codegen",
+ "odra-ir",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
  "syn 1.0.98",
@@ -937,7 +895,7 @@ version = "0.1.0"
 source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
 dependencies = [
  "cfg-if 1.0.0",
- "odra-types 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
+ "odra-types",
 ]
 
 [[package]]
@@ -948,14 +906,7 @@ dependencies = [
  "dlopen",
  "dlopen_derive",
  "odra-test-env",
- "odra-types 0.1.0 (git+https://github.com/odradev/odra.git?branch=master)",
-]
-
-[[package]]
-name = "odra-types"
-version = "0.1.0"
-dependencies = [
- "casper-types",
+ "odra-types",
 ]
 
 [[package]]

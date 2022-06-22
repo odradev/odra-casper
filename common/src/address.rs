@@ -1,4 +1,4 @@
-use odra::types::{
+use odra_types::{
     account::AccountHash,
     bytesrepr::{self, FromBytes, ToBytes},
     CLType, CLTyped, ContractPackageHash, Key, Address as OdraAddress
