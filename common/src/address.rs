@@ -1,7 +1,7 @@
 use odra::types::{
     account::AccountHash,
     bytesrepr::{self, FromBytes, ToBytes},
-    CLType, CLTyped, ContractPackageHash, Key,
+    CLType, CLTyped, ContractPackageHash, Key, Address as OdraAddress
 };
 
 /// An enum representing an [`AccountHash`] or a [`ContractPackageHash`].
@@ -94,14 +94,14 @@ impl FromBytes for Address {
     }
 }
 
-impl Into<odra::types::Address> for Address {
-    fn into(self) -> odra::types::Address {
-        odra::types::Address::new(self.into_bytes().unwrap().as_slice())
+impl Into<OdraAddress> for Address {
+    fn into(self) -> OdraAddress {
+        OdraAddress::new(self.into_bytes().unwrap().as_slice())
     }
 }
 
-impl From<&odra::types::Address> for Address {
-    fn from(address: &odra::types::Address) -> Self {
+impl From<&OdraAddress> for Address {
+    fn from(address: &OdraAddress) -> Self {
         let bytes = address.bytes();
         //TODO to add error handling
         <Address as FromBytes>::from_bytes(bytes).unwrap().0
