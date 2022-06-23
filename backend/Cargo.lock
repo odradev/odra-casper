@@ -425,7 +425,7 @@ dependencies = [
 [[package]]
 name = "odra"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
+source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
 dependencies = [
  "cfg-if 1.0.0",
  "odra-proc-macros",
@@ -436,7 +436,7 @@ dependencies = [
 [[package]]
 name = "odra-codegen"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
+source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
 dependencies = [
  "odra-ir",
  "proc-macro-error",
@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "odra-ir"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
+source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -459,7 +459,7 @@ dependencies = [
 [[package]]
 name = "odra-proc-macros"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
+source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
 dependencies = [
  "odra-codegen",
  "odra-ir",
@@ -471,7 +471,7 @@ dependencies = [
 [[package]]
 name = "odra-types"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#d1fa789bbf68affe5cfdad7860c814ff4504cfef"
+source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
 dependencies = [
  "casper-types",
 ]
