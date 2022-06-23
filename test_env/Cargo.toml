@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-odra = { git = "https://github.com/odradev/odra.git", branch = "master", default-features = false, features = [ "wasm-test" ] }
-casper-commons = { path = "../common" }
+odra = { git = "https://github.com/odradev/odra.git", default-features = false, features = [ "wasm-test" ] }
+casper-commons = { git = "https://github.com/odradev/odra-casper.git" }
 casper-engine-test-support = { version = "2.0.3", features = ["test-support"] }
 casper-execution-engine = { version = "2.0.0" }
 casper-types = "1.5.0"

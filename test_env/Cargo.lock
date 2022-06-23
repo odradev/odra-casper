@@ -96,6 +96,7 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 [[package]]
 name = "casper-commons"
 version = "0.1.0"
+source = "git+https://github.com/odradev/odra-casper.git#bf8bfd94fda549bea86104ba8736fe80a4c5b3ef"
 dependencies = [
  "odra-types",
 ]
@@ -801,7 +802,7 @@ dependencies = [
 [[package]]
 name = "odra"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "cfg-if",
  "odra-proc-macros",
@@ -814,7 +815,7 @@ dependencies = [
 [[package]]
 name = "odra-codegen"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "odra-ir",
  "proc-macro-error",
@@ -826,7 +827,7 @@ dependencies = [
 [[package]]
 name = "odra-ir"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "proc-macro-error",
  "proc-macro2 1.0.40",
@@ -837,7 +838,7 @@ dependencies = [
 [[package]]
 name = "odra-proc-macros"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "odra-codegen",
  "odra-ir",
@@ -849,7 +850,7 @@ dependencies = [
 [[package]]
 name = "odra-test-env"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "cfg-if",
  "odra-types",
@@ -858,7 +859,7 @@ dependencies = [
 [[package]]
 name = "odra-test-env-wrapper"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "dlopen",
  "dlopen_derive",
@@ -869,7 +870,7 @@ dependencies = [
 [[package]]
 name = "odra-types"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "casper-types",
 ]

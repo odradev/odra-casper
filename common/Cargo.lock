@@ -382,7 +382,7 @@ dependencies = [
 [[package]]
 name = "odra-types"
 version = "0.1.0"
-source = "git+https://github.com/odradev/odra.git?branch=master#de780f6117d4969749ba6474b2b770a4b528b7b0"
+source = "git+https://github.com/odradev/odra.git#541d4542fc384827b9247259fc1e54a55fd79119"
 dependencies = [
  "casper-types",
 ]
