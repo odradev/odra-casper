@@ -113,13 +113,12 @@ impl CasperTestEnv {
         let execute_request = ExecuteRequestBuilder::from_deploy_item(deploy_item)
             .with_block_time(self.block_time)
             .build();
-        self.context.exec(execute_request).commit();
+        self.context.exec(execute_request).commit().expect_success();
 
         let active_account = self.active_account_hash();
 
         let result = if has_return {
             let result: Bytes = self.get_account_value(active_account, "result");
-            dbg!(&result);
             Some(result)
         } else {
             None

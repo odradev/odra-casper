@@ -144,6 +144,10 @@ pub fn get_block_time() -> u64 {
     u64::from(runtime::get_blocktime())
 }
 
-pub fn revert<T: Into<ApiError>>(error: T) -> ! {
-    runtime::revert(error);
+pub fn revert(error: u32) -> ! {
+    runtime::revert(ApiError::User(error as u16))
+}
+
+pub fn print(message: &str) {
+    runtime::print(message)
 }

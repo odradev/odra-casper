@@ -16,7 +16,10 @@ impl<'a> ToTokens for WasmEntrypoint<'a> {
             .for_each(|arg| fn_args.push(format_ident!("{}", arg.ident)));
 
         let contract_call = match self.0.ret {
-            odra::types::CLType::Unit => quote!(contract.#entrypoint_ident(#fn_args);),
+            odra::types::CLType::Unit => quote! {
+                #args
+                contract.#entrypoint_ident(#fn_args);
+            },
             _ => quote! {
                 use casper_backend::backend::casper_contract::unwrap_or_revert::UnwrapOrRevert;
                 #args
@@ -33,7 +36,6 @@ impl<'a> ToTokens for WasmEntrypoint<'a> {
             fn #entrypoint_ident() {
                 //TODO: do not hardcode the path, somehow pass a fully qualified path
                 let contract = sample_contract::#contract_ident::instance("contract");
-                #args
                 #contract_call
             }
         });
