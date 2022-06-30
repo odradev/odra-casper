@@ -1,8 +1,8 @@
-use casper_types::{RuntimeArgs, bytesrepr::Bytes};
+use crate::env::ENV;
+use casper_types::{bytesrepr::Bytes, RuntimeArgs};
 use odra::types::Address;
 use odra::ContractContainer;
 use utils::OdraAddressWrapper;
-use crate::env::ENV;
 
 pub mod env;
 mod utils;

@@ -1,6 +1,6 @@
-use odra::contract_def::{Entrypoint, Argument};
+use odra::contract_def::{Argument, Entrypoint};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident, quote, TokenStreamExt};
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 use syn::{self, punctuated::Punctuated, token::Comma, Ident};
 
 pub(crate) struct WasmEntrypoint<'a>(pub &'a Entrypoint, pub &'a Ident);
@@ -11,7 +11,8 @@ impl<'a> ToTokens for WasmEntrypoint<'a> {
         let args = CasperArgs(&self.0.args).to_token_stream();
 
         let mut fn_args = Punctuated::<Ident, Comma>::new();
-        self.0.args
+        self.0
+            .args
             .iter()
             .for_each(|arg| fn_args.push(format_ident!("{}", arg.ident)));
 

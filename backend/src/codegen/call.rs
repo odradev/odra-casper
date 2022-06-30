@@ -10,7 +10,11 @@ pub(crate) struct ContractEntrypoints<'a>(pub &'a Vec<Entrypoint>);
 impl ToTokens for ContractEntrypoints<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(quote!(let mut entry_points = odra::types::EntryPoints::new();));
-        tokens.append_all(self.0.iter().map(|ep| ContractEntrypoints::build_entry_point(ep)));
+        tokens.append_all(
+            self.0
+                .iter()
+                .map(|ep| ContractEntrypoints::build_entry_point(ep)),
+        );
     }
 }
 
@@ -68,7 +72,8 @@ impl ToTokens for EntrypointParams<'_> {
         if self.0.is_empty() {
             tokens.extend(quote!(Vec::<odra::types::Parameter>::new()));
         } else {
-            let params_content = self.0
+            let params_content = self
+                .0
                 .iter()
                 .map(|arg| {
                     let arg_ident = format_ident!("{}", arg.ident);

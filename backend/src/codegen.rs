@@ -3,7 +3,7 @@ use odra::contract_def::ContractDef;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 
-use self::{entrypoints::WasmEntrypoint, call::ContractEntrypoints};
+use self::{call::ContractEntrypoints, entrypoints::WasmEntrypoint};
 
 mod call;
 mod entrypoints;
