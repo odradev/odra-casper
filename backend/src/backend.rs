@@ -41,3 +41,15 @@ pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeAr
     let address = Address::Contract(ContractPackageHash::try_from(address.bytes()).unwrap());
     casper_env::call_contract(address, entrypoint, args.clone())
 }
+
+pub fn is_named_arg_exist(name: &str) -> bool {
+    let mut arg_size: usize = 0;
+    let ret = unsafe {
+        casper_contract::ext_ffi::casper_get_named_arg_size(
+            name.as_bytes().as_ptr(),
+            name.len(),
+            &mut arg_size as *mut usize,
+        )
+    };
+    odra::types::api_error::result_from(ret).is_ok()
+}

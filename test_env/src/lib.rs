@@ -16,7 +16,7 @@ fn backend_name() -> String {
 fn register_contract(container: &ContractContainer) -> Address {
     ENV.with(|env| {
         env.borrow_mut()
-            .deploy_contract(container.wasm_path.as_str(), RuntimeArgs::new());
+            .deploy_contract(container.wasm_path.as_str(), container.args.clone());
 
         let contract_package_hash = format!("{}_package_hash", container.name);
         let wrapped_address: OdraAddressWrapper = env
