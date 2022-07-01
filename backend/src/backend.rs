@@ -1,6 +1,6 @@
 mod casper_env;
 
-use casper_commons::address::Address;
+pub use casper_commons::address::Address;
 pub use casper_contract;
 use odra::types::{Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs};
 

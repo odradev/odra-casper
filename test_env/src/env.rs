@@ -6,9 +6,9 @@ use casper_engine_test_support::{
     DEFAULT_ACCOUNT_INITIAL_BALANCE, DEFAULT_GENESIS_CONFIG, DEFAULT_GENESIS_CONFIG_HASH,
     DEFAULT_PAYMENT,
 };
-use casper_execution_engine::{core::engine_state::{
+use casper_execution_engine::core::engine_state::{
     run_genesis_request::RunGenesisRequest, GenesisAccount,
-}};
+};
 use casper_types::{
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},

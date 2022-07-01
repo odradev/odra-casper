@@ -1,9 +1,8 @@
-use odra::{
-    contract_def::{Argument, Entrypoint},
-    types::CLType,
-};
+use odra::contract_def::{Argument, Entrypoint, EntrypointType};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+
+use super::ty::WrappedType;
 
 pub(crate) struct ContractEntrypoints<'a>(pub &'a Vec<Entrypoint>);
 
@@ -23,45 +22,23 @@ impl ContractEntrypoints<'_> {
         let entrypoint_ident = format_ident!("{}", entrypoint.ident);
         let params = EntrypointParams(&entrypoint.args);
         let ret = WrappedType(&entrypoint.ret);
-
+        let access = match &entrypoint.ty {
+            EntrypointType::Constructor => quote! {
+                odra::types::EntryPointAccess::Groups(vec![odra::types::Group::new("constructor")])
+            },
+            EntrypointType::Public => quote! { odra::types::EntryPointAccess::Public },
+        };
         quote! {
             entry_points.add_entry_point(
                 odra::types::EntryPoint::new(
                     stringify!(#entrypoint_ident),
                     #params,
                     #ret,
-                    odra::types::EntryPointAccess::Public,
+                    #access,
                     odra::types::EntryPointType::Contract,
                 )
             );
         }
-    }
-}
-
-struct WrappedType<'a>(pub &'a CLType);
-
-impl ToTokens for WrappedType<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let stream = match &self.0 {
-            odra::types::CLType::Bool => quote!(odra::types::CLType::Bool),
-            odra::types::CLType::I32 => quote!(<i32 as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::I64 => quote!(<i64 as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::U8 => quote!(<u8 as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::U32 => quote!(<u32 as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::U64 => quote!(<u64 as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::U128 => quote!(odra::types::CLType::U128),
-            odra::types::CLType::U256 => quote!(odra::types::CLType::U256),
-            odra::types::CLType::U512 => quote!(odra::types::CLType::U512),
-            odra::types::CLType::Unit => quote!(<() as odra::types::CLTyped>::cl_type()),
-            odra::types::CLType::String => quote!(odra::types::CLType::String),
-            odra::types::CLType::Option(value) => {
-                let value_stream = WrappedType(&**value).to_token_stream();
-                quote!(odra::types::CLType::Option(Box::new(#value_stream)))
-            }
-            odra::types::CLType::Any => quote!(odra::types::CLType::Any),
-            _ => panic!("Unsupported arg type"),
-        };
-        tokens.extend(stream);
     }
 }
 
@@ -93,5 +70,48 @@ impl ToTokens for EntrypointParams<'_> {
 
             tokens.extend(params);
         };
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::vec;
+
+    use odra::contract_def::{Entrypoint, EntrypointType};
+    use pretty_assertions::assert_str_eq;
+    use quote::ToTokens;
+
+    use super::ContractEntrypoints;
+
+    #[test]
+    fn parse_cl_type() {
+        let a = vec![Entrypoint {
+            ident: "A".to_string(),
+            args: vec![],
+            ret: odra::types::CLType::Map {
+                key: Box::new(odra::types::CLType::Bool),
+                value: Box::new(odra::types::CLType::U128),
+            },
+            ty: EntrypointType::Public,
+        }];
+        let ep = ContractEntrypoints(&a);
+        let result = ep.to_token_stream();
+
+        assert_str_eq!(
+            result.to_string(),
+            quote::quote! {
+                let mut entry_points = odra::types::EntryPoints::new();
+                entry_points.add_entry_point(
+                    odra::types::EntryPoint::new(
+                        stringify!(A),
+                        Vec::<odra::types::Parameter>::new(),
+                        odra::types::CLType::Bool,
+                        odra::types::EntryPointAccess::Public,
+                        odra::types::EntryPointType::Contract,
+                    )
+                );
+            }
+            .to_string()
+        );
     }
 }
