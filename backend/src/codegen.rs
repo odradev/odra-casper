@@ -43,12 +43,13 @@ fn generate_call(contract_def: &ContractDef) -> TokenStream2 {
     let package_hash =
         format!("{}_package_hash", &contract_def.ident).to_case(convert_case::Case::Snake);
 
-    let call_constructor = contract_def
+    let constructors = contract_def
         .entrypoints
         .iter()
-        .find(|ep| ep.ty == EntrypointType::Constructor)
-        .and_then(|ep| Some(WasmConstructor(ep, &contract_def.ident)))
-        .unwrap();
+        .filter(|ep| ep.ty == EntrypointType::Constructor)
+        .collect::<Vec<_>>();
+
+    let call_constructor = WasmConstructor(constructors, &contract_def.ident);
 
     quote! {
         #[no_mangle]
