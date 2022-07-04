@@ -1,10 +1,10 @@
 use odra::contract_def::Entrypoint;
 use quote::{format_ident, quote, ToTokens};
-use syn::{self, punctuated::Punctuated, token::Comma, Ident};
+use syn::{self, punctuated::Punctuated, token::Comma, Ident, Path};
 
 use super::arg::CasperArgs;
 
-pub(crate) struct WasmEntrypoint<'a>(pub &'a Entrypoint, pub &'a Ident);
+pub(crate) struct WasmEntrypoint<'a>(pub &'a Entrypoint, pub &'a Path);
 
 impl ToTokens for WasmEntrypoint<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
@@ -31,13 +31,13 @@ impl ToTokens for WasmEntrypoint<'_> {
             },
         };
 
-        let contract_ident = &self.1;
+        let contract_path = &self.1;
 
         tokens.extend(quote! {
             #[no_mangle]
             fn #entrypoint_ident() {
                 //TODO: do not hardcode the path, somehow pass a fully qualified path
-                let contract = sample_contract::#contract_ident::instance("contract");
+                let contract = #contract_path::instance("contract");
                 #contract_call
             }
         });

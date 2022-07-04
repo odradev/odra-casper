@@ -3,13 +3,14 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{punctuated::Punctuated, token::Comma, Ident};
 
 use super::arg::CasperArgs;
-type FnArgs = Punctuated::<Ident, Comma>;
+type FnArgs = Punctuated<Ident, Comma>;
 
 pub(crate) struct WasmConstructor<'a>(pub Vec<&'a Entrypoint>, pub &'a String);
 
 impl ToTokens for WasmConstructor<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let data: Vec<(Ident, CasperArgs, FnArgs)> = self.0
+        let data: Vec<(Ident, CasperArgs, FnArgs)> = self
+            .0
             .iter()
             .map(|ep| {
                 let entrypoint_ident = format_ident!("{}", &ep.ident);
@@ -19,13 +20,14 @@ impl ToTokens for WasmConstructor<'_> {
                 ep.args
                     .iter()
                     .for_each(|arg| fn_args.push(format_ident!("{}", arg.ident)));
-                
+
                 (entrypoint_ident, casper_args, fn_args)
             })
             .collect();
 
         let ref_ident = format_ident!("{}Ref", &self.1);
-        let constructor_matching: proc_macro2::TokenStream = data.iter()
+        let constructor_matching: proc_macro2::TokenStream = data
+            .iter()
             .map(|(entrypoint_ident, casper_args, fn_args)| {
                 quote! {
                     stringify!(#entrypoint_ident) => {
@@ -33,14 +35,13 @@ impl ToTokens for WasmConstructor<'_> {
                             address: odra_address,
                         };
                         #casper_args
-        
+
                         contract_ref.#entrypoint_ident( #fn_args );
                     },
                 }
             })
             .flatten()
             .collect();
-
 
         tokens.extend(quote! {
             if casper_backend::backend::is_named_arg_exist("constructor") {
