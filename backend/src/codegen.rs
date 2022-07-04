@@ -2,9 +2,8 @@ use convert_case::Casing;
 use odra::contract_def::{ContractDef, EntrypointType};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-use std::path::Path;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, PathSegment, Token};
+use syn::{PathSegment, Token};
 
 use self::{call::ContractEntrypoints, constructor::WasmConstructor, entrypoints::WasmEntrypoint};
 
@@ -35,13 +34,9 @@ pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
 fn generate_entrypoints(contract_def: &ContractDef, fqn: String) -> TokenStream2 {
     let paths = fqn.split("::").collect::<Vec<_>>();
 
-    let mut segments: Punctuated<PathSegment, Token![::]> = Punctuated::new();
-    paths.iter().for_each(|p| {
-        segments.push(PathSegment {
-            ident: format_ident!("{}", p),
-            arguments: syn::PathArguments::None,
-        });
-    });
+    let segments = Punctuated::<PathSegment, Token![::]>::from_iter(
+        paths.iter().map(|ident| PathSegment::from(format_ident!("{}", ident)))
+    );
 
     let path = syn::Path {
         leading_colon: None,
