@@ -36,7 +36,6 @@ impl ToTokens for WasmEntrypoint<'_> {
         tokens.extend(quote! {
             #[no_mangle]
             fn #entrypoint_ident() {
-                //TODO: do not hardcode the path, somehow pass a fully qualified path
                 let contract = #contract_path::instance("contract");
                 #contract_call
             }

@@ -3,7 +3,7 @@ use odra::contract_def::{ContractDef, EntrypointType};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::punctuated::Punctuated;
-use syn::{PathSegment, Token};
+use syn::{Path, PathSegment, Token};
 
 use self::{call::ContractEntrypoints, constructor::WasmConstructor, entrypoints::WasmEntrypoint};
 
@@ -16,8 +16,8 @@ mod ty;
 // TODO: Put those functions into trait inside odra, so each backend will implement them
 
 pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
-    let entrypoints = generate_entrypoints(&contract_def, fqn);
-    let call_fn = generate_call(&contract_def);
+    let entrypoints = generate_entrypoints(&contract_def, fqn.clone());
+    let call_fn = generate_call(&contract_def, fqn + "Ref");
 
     quote! {
         #![no_main]
@@ -32,26 +32,16 @@ pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
 }
 
 fn generate_entrypoints(contract_def: &ContractDef, fqn: String) -> TokenStream2 {
-    let paths = fqn.split("::").collect::<Vec<_>>();
-
-    let segments = Punctuated::<PathSegment, Token![::]>::from_iter(
-        paths.iter().map(|ident| PathSegment::from(format_ident!("{}", ident)))
-    );
-
-    let path = syn::Path {
-        leading_colon: None,
-        segments,
-    };
-
+    let path = &fqn_to_path(fqn);
     contract_def
         .entrypoints
         .iter()
-        .map(|ep| WasmEntrypoint(&ep, &path).to_token_stream())
+        .map(|ep| WasmEntrypoint(&ep, path).to_token_stream())
         .flatten()
         .collect::<TokenStream2>()
 }
 
-fn generate_call(contract_def: &ContractDef) -> TokenStream2 {
+fn generate_call(contract_def: &ContractDef, ref_fqn: String) -> TokenStream2 {
     let entrypoints = ContractEntrypoints(&contract_def.entrypoints);
     let package_hash =
         format!("{}_package_hash", &contract_def.ident).to_case(convert_case::Case::Snake);
@@ -62,7 +52,8 @@ fn generate_call(contract_def: &ContractDef) -> TokenStream2 {
         .filter(|ep| ep.ty == EntrypointType::Constructor)
         .collect::<Vec<_>>();
 
-    let call_constructor = WasmConstructor(constructors, &contract_def.ident);
+    let ref_path = &fqn_to_path(ref_fqn);
+    let call_constructor = WasmConstructor(constructors, ref_path);
 
     quote! {
         #[no_mangle]
@@ -81,4 +72,20 @@ fn generate_call(contract_def: &ContractDef) -> TokenStream2 {
             #call_constructor
         }
     }
+}
+
+fn fqn_to_path(fqn: String) -> Path {
+    let paths = fqn.split("::").collect::<Vec<_>>();
+
+    let segments = Punctuated::<PathSegment, Token![::]>::from_iter(
+        paths
+            .iter()
+            .map(|ident| PathSegment::from(format_ident!("{}", ident))),
+    );
+
+    let path = syn::Path {
+        leading_colon: None,
+        segments,
+    };
+    path
 }

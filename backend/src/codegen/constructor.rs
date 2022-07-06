@@ -1,11 +1,11 @@
 use odra::contract_def::Entrypoint;
 use quote::{format_ident, quote, ToTokens};
-use syn::{punctuated::Punctuated, token::Comma, Ident};
+use syn::{punctuated::Punctuated, token::Comma, Ident, Path};
 
 use super::arg::CasperArgs;
 type FnArgs = Punctuated<Ident, Comma>;
 
-pub(crate) struct WasmConstructor<'a>(pub Vec<&'a Entrypoint>, pub &'a String);
+pub(crate) struct WasmConstructor<'a>(pub Vec<&'a Entrypoint>, pub &'a Path);
 
 impl ToTokens for WasmConstructor<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
@@ -25,13 +25,13 @@ impl ToTokens for WasmConstructor<'_> {
             })
             .collect();
 
-        let ref_ident = format_ident!("{}Ref", &self.1);
+        let ref_ident = &self.1;
         let constructor_matching: proc_macro2::TokenStream = data
             .iter()
             .map(|(entrypoint_ident, casper_args, fn_args)| {
                 quote! {
                     stringify!(#entrypoint_ident) => {
-                        let contract_ref = sample_contract::#ref_ident {
+                        let contract_ref = #ref_ident {
                             address: odra_address,
                         };
                         #casper_args
