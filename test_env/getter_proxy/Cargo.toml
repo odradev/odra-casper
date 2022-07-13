@@ -1,0 +1,18 @@
+[package]
+name = "getter_proxy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+casper-contract = { version = "1.4.3" }
+casper-types = "1.4.6"
+
+
+[[bin]]
+name = "getter_proxy"
+path = "bin/getter_proxy.rs"
+bench = false
+doctest = false
+test = false

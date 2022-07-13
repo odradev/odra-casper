@@ -92,7 +92,7 @@ impl CasperTestEnv {
         args: RuntimeArgs,
         has_return: bool,
     ) -> Option<Bytes> {
-        let session_code = PathBuf::from("getter_proxy.wasm");
+        let session_code = include_bytes!("../getter_proxy.wasm").to_vec();
 
         let args_bytes: Vec<u8> = args.to_bytes().unwrap();
         let args = runtime_args! {
@@ -106,7 +106,7 @@ impl CasperTestEnv {
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
             .with_authorization_keys(&[self.active_account_hash()])
             .with_address(self.active_account_hash())
-            .with_session_code(session_code, args)
+            .with_session_bytes(session_code, args)
             .with_deploy_hash(self.next_hash())
             .build();
 
