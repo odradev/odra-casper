@@ -31,9 +31,7 @@ impl ToTokens for WasmConstructor<'_> {
             .map(|(entrypoint_ident, casper_args, fn_args)| {
                 quote! {
                     stringify!(#entrypoint_ident) => {
-                        let contract_ref = #ref_ident {
-                            address: odra_address,
-                        };
+                        let contract_ref = #ref_ident::at(odra_address);
                         #casper_args
 
                         contract_ref.#entrypoint_ident( #fn_args );

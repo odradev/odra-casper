@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-odra-types = { git = "https://github.com/odradev/odra.git" }
-# odra-types = { path = "../../odra/types" }
+# odra-types = { git = "https://github.com/odradev/odra.git" }
+odra-types = { path = "../../../odra/types" }

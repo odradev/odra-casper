@@ -40,18 +40,19 @@ pub fn call_contract(
     })
 }
 
-// #[no_mangle]
-// pub fn assert_exception<F, E>(err: E, block: F)
-// where
-//     F: Fn() -> (),
-//     E: Into<OdraError>,
-// {
-//     block();
-//     let exec_err = borrow_env()
-//         .error()
-//         .expect("An error expected, but did not occur");
-//     assert_eq!(exec_err, err.into());
-// }
+#[no_mangle]
+pub fn assert_exception<F, E>(err: E, block: F)
+where
+    F: Fn() -> (),
+    E: Into<OdraError>,
+{
+    todo!();
+    // block();
+    // let exec_err = borrow_env()
+    //     .error()
+    //     .expect("An error expected, but did not occur");
+    // assert_eq!(exec_err, err.into());
+}
 
 #[no_mangle]
 pub fn set_caller(address: &OdraAddress) {
