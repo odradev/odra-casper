@@ -123,7 +123,7 @@ impl CasperTestEnv {
         } else {
             None
         };
-        self.active_account = self.get_account(0);
+        // self.active_account = self.get_account(0);
         result
     }
 
@@ -135,11 +135,11 @@ impl CasperTestEnv {
         *self.active_account.as_account_hash().unwrap()
     }
 
-    fn get_account(&self, n: usize) -> Address {
+    pub fn get_account(&self, n: usize) -> Address {
         *self.accounts.get(n).unwrap()
     }
 
-    fn as_account(&mut self, account: Address) {
+    pub fn as_account(&mut self, account: Address) {
         self.active_account = account;
     }
 

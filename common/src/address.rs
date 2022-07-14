@@ -79,7 +79,9 @@ impl ToBytes for Address {
 
 impl FromBytes for Address {
     fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), bytesrepr::Error> {
+        dbg!("elo");
         let (key, remainder) = Key::from_bytes(bytes)?;
+        dbg!("elo2");
 
         let address = match key {
             Key::Account(account_hash) => Address::Account(account_hash),

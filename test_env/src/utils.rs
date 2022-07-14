@@ -1,24 +1,58 @@
-use casper_types::{account::AccountHash, ContractPackageHash};
+use std::ops::Deref;
 
-pub(crate) struct OdraAddressWrapper(pub odra::types::Address);
+use casper_commons::address::Address as CasperAddress;
+use odra::types::Address as OdraAddress;
+use casper_types::{account::AccountHash, ContractPackageHash, bytesrepr::{FromBytes, ToBytes}};
+
+pub(crate) struct OdraAddressWrapper(OdraAddress);
+
+impl OdraAddressWrapper {
+    pub fn new(address: OdraAddress) -> Self {
+        Self(address)
+    }
+} 
+
+impl Deref for OdraAddressWrapper {
+    type Target = OdraAddress;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl From<AccountHash> for OdraAddressWrapper {
     fn from(hash: AccountHash) -> Self {
-        OdraAddressWrapper(odra::types::Address::new(hash.as_bytes()))
+        let casper_address: CasperAddress = hash.into();
+        OdraAddressWrapper(casper_address.into())
     }
 }
 
 impl From<ContractPackageHash> for OdraAddressWrapper {
     fn from(hash: ContractPackageHash) -> Self {
-        OdraAddressWrapper(odra::types::Address::new(hash.as_bytes()))
+        let casper_address: CasperAddress = hash.into();
+        OdraAddressWrapper(casper_address.into())
+    }
+}
+
+impl From<CasperAddress> for OdraAddressWrapper {
+    fn from(address: CasperAddress) -> Self {
+        let bytes = address.to_bytes().unwrap();
+        OdraAddressWrapper(OdraAddress::new(bytes.as_slice()))
+    }
+}
+
+impl Into<CasperAddress> for OdraAddressWrapper {
+    fn into(self) -> CasperAddress {
+        let vec = self.to_bytes().unwrap();
+        CasperAddress::from_vec(vec).unwrap().0
     }
 }
 
 impl Into<ContractPackageHash> for OdraAddressWrapper {
     fn into(self) -> ContractPackageHash {
-        let mut bytes_vec = self.0.bytes().to_vec();
-        bytes_vec.resize(32, 0);
-        let mut bytes = [0u8; 32];
+        let mut bytes_vec = self.bytes().to_vec();
+        bytes_vec.resize(casper_types::KEY_HASH_LENGTH, 0);
+        let mut bytes = [0u8; casper_types::KEY_HASH_LENGTH];
         bytes.copy_from_slice(bytes_vec.as_slice());
 
         ContractPackageHash::new(bytes)
