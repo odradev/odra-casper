@@ -1,20 +1,23 @@
 use std::{cell::RefCell, path::PathBuf};
 
+use odra::types::{OdraError, VmError};
 use casper_commons::address::Address;
 use casper_engine_test_support::{
     DeployItemBuilder, ExecuteRequestBuilder, InMemoryWasmTestBuilder, ARG_AMOUNT,
     DEFAULT_ACCOUNT_INITIAL_BALANCE, DEFAULT_GENESIS_CONFIG, DEFAULT_GENESIS_CONFIG_HASH,
     DEFAULT_PAYMENT,
 };
-use casper_execution_engine::core::engine_state::{
+use casper_execution_engine::core::engine_state::{ self,
     run_genesis_request::RunGenesisRequest, GenesisAccount,
 };
 use casper_types::{
+    ApiError,
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     runtime_args, CLTyped, ContractPackageHash, Key, Motes, PublicKey, RuntimeArgs, SecretKey,
     U512,
 };
+pub use casper_execution_engine::core::execution::Error as ExecutionError;
 
 thread_local! {
     pub static ENV: RefCell<CasperTestEnv> = RefCell::new(CasperTestEnv::new());
@@ -26,6 +29,7 @@ pub struct CasperTestEnv {
     context: InMemoryWasmTestBuilder,
     block_time: u64,
     calls_counter: u32,
+    error: Option<OdraError>
 }
 
 impl CasperTestEnv {
@@ -65,6 +69,7 @@ impl CasperTestEnv {
             accounts,
             block_time: 0,
             calls_counter: 0,
+            error: None
         }
     }
 
@@ -92,8 +97,9 @@ impl CasperTestEnv {
         args: RuntimeArgs,
         has_return: bool,
     ) -> Option<Bytes> {
-        let session_code = include_bytes!("../getter_proxy.wasm").to_vec();
+        self.error = None;
 
+        let session_code = include_bytes!("../getter_proxy.wasm").to_vec();
         let args_bytes: Vec<u8> = args.to_bytes().unwrap();
         let args = runtime_args! {
             "contract_package_hash" => hash,
@@ -113,17 +119,20 @@ impl CasperTestEnv {
         let execute_request = ExecuteRequestBuilder::from_deploy_item(deploy_item)
             .with_block_time(self.block_time)
             .build();
-        self.context.exec(execute_request).commit().expect_success();
+        self.context.exec(execute_request).commit();
 
         let active_account = self.active_account_hash();
 
-        let result = if has_return {
+        let result = if self.context.is_error() {
+            self.error = Some(parse_error(self.context.get_error().unwrap()));
+            None
+        } else if has_return {
             let result: Bytes = self.get_account_value(active_account, "result");
             Some(result)
         } else {
             None
         };
-        // self.active_account = self.get_account(0);
+
         result
     }
 
@@ -170,5 +179,22 @@ impl CasperTestEnv {
             .unwrap();
         let key: &Key = account.named_keys().get(name).unwrap();
         ContractPackageHash::from(key.into_hash().unwrap())
+    }
+
+    pub fn get_error(&self) -> Option<OdraError> {
+        self.error.clone()
+    }
+}
+
+fn parse_error(err: engine_state::Error) -> OdraError {
+    if let engine_state::Error::Exec(exec_err) = err {
+        match exec_err {
+            ExecutionError::Revert(ApiError::User(id)) => OdraError::execution_err(id, ""),
+            ExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
+            ExecutionError::NoSuchMethod(name) => OdraError::VmError(VmError::NoSuchMethod(name)),
+            _ => OdraError::VmError(VmError::Other(format!("Casper ExecError: {}", exec_err.to_string()))),
+        }
+    } else {
+        OdraError::VmError(VmError::Other(format!("Casper EngineStateError: {}", err.to_string())))
     }
 }

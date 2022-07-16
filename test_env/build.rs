@@ -11,10 +11,11 @@ fn main() {
         .args(vec![
             "build",
             "--release",
-            "--quiet",
             "--no-default-features",
             "--bin",
             "getter_proxy",
+            "--target",
+            "wasm32-unknown-unknown"
         ])
         .output()
         .expect("Couldn't build getter proxy");

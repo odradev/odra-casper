@@ -6,3 +6,9 @@ edition = "2021"
 [dependencies]
 # odra-types = { git = "https://github.com/odradev/odra.git" }
 odra-types = { path = "../../../odra/types" }
+casper-types = "1.5.0"
+odra = { path = "../../../odra/core", default-features = false }
+
+[features]
+wasm = [ "odra/wasm" ]
+wasm-test = [ "odra/wasm-test" ]

@@ -96,10 +96,7 @@ impl FromBytes for Address {
 
 impl Into<OdraAddress> for Address {
     fn into(self) -> OdraAddress {
-        match self {
-            Address::Account(account) => OdraAddress::new(account.as_bytes()),
-            Address::Contract(contract) => OdraAddress::new(contract.as_bytes()),
-        }
+        OdraAddress::new(&self.to_bytes().unwrap())
     }
 }
 

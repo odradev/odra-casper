@@ -1,8 +1,8 @@
 mod casper_env;
 
-pub use casper_commons::address::Address;
+pub use casper_commons::{odra_address_wrapper::OdraAddressWrapper, address::Address};
 pub use casper_contract;
-use odra::types::{Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs};
+use odra::types::{Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs, EventData, OdraError};
 
 #[no_mangle]
 pub fn __get_blocktime() -> u64 {
@@ -27,8 +27,22 @@ fn __get_var(key: &[u8]) -> Option<CLValue> {
 }
 
 #[no_mangle]
-fn __revert(reason: u32) -> ! {
-    casper_env::revert(reason)
+fn __set_dict_value(dict: &[u8], key: &[u8], value: &CLValue) {
+
+}
+
+#[no_mangle]
+fn __get_dict_value(dict: &[u8], key: &[u8]) -> Option<CLValue> {
+    None
+}
+
+#[no_mangle]
+fn __revert(reason: &OdraError) -> ! {
+    let code = match reason {
+        OdraError::ExecutionError(code, _) => *code,
+        _ => 0
+    };
+    casper_env::revert(code);
 }
 
 #[no_mangle]
@@ -38,10 +52,16 @@ fn __print(message: &str) {
 
 #[no_mangle]
 pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs) -> Vec<u8> {
-    let address = Address::Contract(ContractPackageHash::try_from(address.bytes()).unwrap());
+    let address: Address = OdraAddressWrapper::new(*address).into(); 
     casper_env::call_contract(address, entrypoint, args.clone())
 }
 
+#[no_mangle]
+fn __emit_event(event: &EventData) {
+
+}
+
+// @TODO: rename to 
 pub fn is_named_arg_exist(name: &str) -> bool {
     let mut arg_size: usize = 0;
     let ret = unsafe {

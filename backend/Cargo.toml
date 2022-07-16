@@ -7,7 +7,7 @@ edition = "2021"
 # odra = { git = "https://github.com/odradev/odra.git", default-features = false, features = [ "wasm" ] }
 odra = { path = "../../../odra/core", default-features = false, features = ["wasm"] }
 casper-contract = { version = "1.4.4", default-features = false, features = ["std", "test-support"] }
-casper-commons = { path = "../common" }
+casper-commons = { path = "../common", features = [ "wasm" ] }
 proc-macro2 = "1.0.39"
 quote = "1.0.18"
 syn = "1.0.96"

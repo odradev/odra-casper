@@ -1,10 +1,11 @@
 use std::ops::Deref;
 
-use casper_commons::address::Address as CasperAddress;
 use odra::types::Address as OdraAddress;
 use casper_types::{account::AccountHash, ContractPackageHash, bytesrepr::{FromBytes, ToBytes}};
+use crate::address::Address as CasperAddress;
 
-pub(crate) struct OdraAddressWrapper(OdraAddress);
+#[derive(Debug)]
+pub struct OdraAddressWrapper(OdraAddress);
 
 impl OdraAddressWrapper {
     pub fn new(address: OdraAddress) -> Self {
@@ -30,7 +31,7 @@ impl From<AccountHash> for OdraAddressWrapper {
 impl From<ContractPackageHash> for OdraAddressWrapper {
     fn from(hash: ContractPackageHash) -> Self {
         let casper_address: CasperAddress = hash.into();
-        OdraAddressWrapper(casper_address.into())
+        casper_address.into()
     }
 }
 
@@ -61,11 +62,10 @@ impl Into<ContractPackageHash> for OdraAddressWrapper {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::OdraAddressWrapper;
-    use casper_commons::address::Address as CasperAddress;
     use casper_types::ContractPackageHash;
-
     use odra::types::Address as OdraAddress;
+    use crate::address::Address as CasperAddress;
+    use super::OdraAddressWrapper;
 
     #[test]
     fn test_address() {
@@ -77,11 +77,16 @@ mod tests {
 
     #[test]
     fn test_casper_address_to_odra_address() {
+        use odra::types::bytesrepr::ToBytes;
         let casper_addr_ph = ContractPackageHash::new([3u8; 32]);
         let casper_addr = CasperAddress::from(casper_addr_ph);
         let odra_addr: OdraAddress = casper_addr.into();
-        let result = CasperAddress::from(&odra_addr);
+        let odra_addr = OdraAddressWrapper::new(odra_addr);
+        let result: CasperAddress = odra_addr.into();
         assert_eq!(result, casper_addr);
         assert_eq!(result.as_contract_package_hash().unwrap(), &casper_addr_ph);
     }
 }
+
+// Contract(ContractPackageHash(582e0b80ca8dd681697222ae235d480605f62a957f8aaddd42a74613e1521300))
+// Address { data: "582e0b80ca8dd681697222ae235d480605f62a957f8aaddd42a74613e15213000000000000000000000000000000000000000000000000000000000000000000" }
