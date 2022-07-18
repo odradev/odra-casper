@@ -1,8 +1,18 @@
 mod casper_env;
+use lazy_static::lazy_static;
 
+use std::{
+    collections::{hash_map::DefaultHasher, BTreeMap},
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+    sync::Mutex,
+};
 pub use casper_commons::{odra_address_wrapper::OdraAddressWrapper, address::Address};
-pub use casper_contract;
-use odra::types::{Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs, EventData, OdraError};
+pub use casper_contract::{
+    self,
+    contract_api::{runtime, storage},
+};
+use odra::types::{URef, Key, Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs, EventData, OdraError};
 
 #[no_mangle]
 pub fn __get_blocktime() -> u64 {
@@ -28,12 +38,14 @@ fn __get_var(key: &[u8]) -> Option<CLValue> {
 
 #[no_mangle]
 fn __set_dict_value(dict: &[u8], key: &[u8], value: &CLValue) {
-
+    let dict = std::str::from_utf8(dict).unwrap();
+    casper_env::set_dict_value(dict, key, value);
 }
 
 #[no_mangle]
 fn __get_dict_value(dict: &[u8], key: &[u8]) -> Option<CLValue> {
-    None
+    let dict = std::str::from_utf8(dict).unwrap();
+    casper_env::get_dict_value(dict, key)
 }
 
 #[no_mangle]
@@ -58,7 +70,7 @@ pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeAr
 
 #[no_mangle]
 fn __emit_event(event: &EventData) {
-
+    casper_env::emit_event(event);
 }
 
 // @TODO: rename to 

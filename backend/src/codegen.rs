@@ -43,8 +43,8 @@ fn generate_entrypoints(contract_def: &ContractDef, fqn: String) -> TokenStream2
 
 fn generate_call(contract_def: &ContractDef, ref_fqn: String) -> TokenStream2 {
     let entrypoints = ContractEntrypoints(&contract_def.entrypoints);
-    let package_hash =
-        format!("{}_package_hash", &contract_def.ident).to_case(convert_case::Case::Snake);
+    let contract_def_name_snake = odra::utils::camel_to_snake(&contract_def.ident);
+    let package_hash = format!("{}_package_hash", contract_def_name_snake);
 
     let constructors = contract_def
         .entrypoints

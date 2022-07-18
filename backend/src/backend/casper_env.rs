@@ -1,18 +1,27 @@
-use std::collections::BTreeSet;
+use std::{collections::{BTreeSet, BTreeMap}, sync::Mutex};
 
 use casper_commons::address::Address;
 use casper_contract::{
-    contract_api::{self, runtime, storage},
+    contract_api::{self, runtime, storage::{self, dictionary_put}},
     unwrap_or_revert::UnwrapOrRevert,
 };
+use lazy_static::lazy_static;
 use odra::types::{
     api_error,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     contracts::NamedKeys,
     system::CallStackElement,
     ApiError, CLTyped, CLValue, ContractPackageHash, ContractVersion, EntryPoints, RuntimeArgs,
-    URef,
+    URef, Key, EventData,
 };
+
+lazy_static! {
+    static ref SEEDS: Mutex<BTreeMap<String, URef>> = Mutex::new(BTreeMap::new());
+}
+
+const EVENTS: &str = "__events";
+const EVENTS_LENGTH: &str = "__events_length";
+
 
 /// Save value to the storage.
 pub fn set_cl_value(name: &str, value: CLValue) {
@@ -50,6 +59,21 @@ pub fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
             Some(value)
         }
     }
+}
+
+pub fn set_dict_value(seed: &str, key: &[u8], value: &CLValue) {
+    let seed = get_seed(seed);
+    let bytes: Bytes = value.to_bytes().unwrap_or_revert().into();
+    storage::dictionary_put(seed, &to_dictionary_key(key), bytes);
+}
+
+pub fn get_dict_value(seed: &str, key: &[u8]) -> Option<CLValue> {
+    let seed = get_seed(seed);
+    let bytes: Option<Bytes> = storage::dictionary_get(seed, &to_dictionary_key(key)).unwrap_or_revert();
+    bytes.map(|bytes| {
+        let (result, _rest) = CLValue::from_bytes(&bytes).unwrap_or_revert();
+        result
+    })
 }
 
 /// Returns address based on a [`CallStackElement`].
@@ -94,14 +118,17 @@ pub fn self_address() -> Address {
 }
 
 /// Record event to the contract's storage.
-pub fn emit<T: ToBytes>(event: T) {
-    // Events::default().emit(event);
+pub fn emit_event(event: &EventData) {
+    // TODO: Optimalize get_key and set_key
+    let events_length: u32 = get_key(EVENTS_LENGTH).unwrap_or_default();
+    let events_seed: URef = get_seed(EVENTS);
+    dictionary_put(events_seed, &events_length.to_string(), event.clone());
+    set_key(EVENTS_LENGTH, events_length + 1);
 }
 
 /// Convert any key to hash.
-pub fn to_dictionary_key<T: ToBytes>(key: &T) -> String {
-    let preimage = key.to_bytes().unwrap_or_revert();
-    let bytes = runtime::blake2b(preimage);
+pub fn to_dictionary_key(key: &[u8]) -> String {
+    let bytes = runtime::blake2b(key);
     hex::encode(bytes)
 }
 
@@ -211,4 +238,23 @@ fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
     // leads to `Unreachable` error.
     api_error::result_from(ret)?;
     Ok(unsafe { bytes_written.assume_init() })
+}
+
+fn get_seed(name: &str) -> URef {
+    let mut seeds = SEEDS.lock().unwrap();
+    match seeds.get(name) {
+        Some(seed) => *seed,
+        None => {
+            let key: Key = match runtime::get_key(name) {
+                Some(key) => key,
+                None => {
+                    storage::new_dictionary(name).unwrap_or_revert();
+                    runtime::get_key(name).unwrap_or_revert()
+                }
+            };
+            let seed: URef = *key.as_uref().unwrap_or_revert();
+            seeds.insert(String::from(name), seed);
+            seed
+        }
+    }
 }

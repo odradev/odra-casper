@@ -1,6 +1,6 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use odra::types::{OdraError, VmError};
+use odra::types::{OdraError, VmError, EventData, event::Error as EventError};
 use casper_commons::address::Address;
 use casper_engine_test_support::{
     DeployItemBuilder, ExecuteRequestBuilder, InMemoryWasmTestBuilder, ARG_AMOUNT,
@@ -15,13 +15,16 @@ use casper_types::{
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     runtime_args, CLTyped, ContractPackageHash, Key, Motes, PublicKey, RuntimeArgs, SecretKey,
-    U512,
+    U512, URef, ContractHash,
 };
 pub use casper_execution_engine::core::execution::Error as ExecutionError;
 
 thread_local! {
     pub static ENV: RefCell<CasperTestEnv> = RefCell::new(CasperTestEnv::new());
 }
+
+const EVENTS: &str = "__events";
+const EVENTS_LENGTH: &str = "__events_length";
 
 pub struct CasperTestEnv {
     accounts: Vec<Address>,
@@ -183,6 +186,53 @@ impl CasperTestEnv {
 
     pub fn get_error(&self) -> Option<OdraError> {
         self.error.clone()
+    }
+
+    pub fn get_event(&self, address: Address, index: i32) -> Result<EventData, EventError>  {
+        let address = address.as_contract_package_hash().unwrap().clone();
+
+        let contract_hash: ContractHash = self
+            .context
+            .get_contract_package(address)
+            .unwrap()
+            .current_contract_hash()
+            .unwrap();
+
+        let dictionary_seed_uref: URef = *self
+            .context
+            .get_contract(contract_hash)
+            .unwrap()
+            .named_keys()
+            .get(EVENTS)
+            .unwrap()
+            .as_uref()
+            .unwrap();
+
+        let events_length: u32 = self
+            .context
+            .query(None, Key::Hash(contract_hash.value()), &[String::from(EVENTS_LENGTH)])
+            .unwrap()
+            .as_cl_value()
+            .unwrap()
+            .clone()
+            .into_t()
+            .unwrap();
+
+        let event_position: u32 = odra::test_utils::event_absolute_position(events_length, index)?;
+
+        match self.context.query_dictionary_item(
+            None,
+            dictionary_seed_uref,
+            &event_position.to_string(),
+        ) {
+            Ok(val) => {
+                let value: Bytes = val.as_cl_value().unwrap().clone().into_t::<Bytes>().unwrap();
+                Ok(value.inner_bytes().clone())
+            }
+            Err(e) => {
+                Err(EventError::IndexOutOfBounds)
+            },
+        }
     }
 }
 

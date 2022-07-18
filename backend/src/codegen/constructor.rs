@@ -55,14 +55,9 @@ impl ToTokens for WasmConstructor<'_> {
                     .unwrap_or_revert();
 
                 let casper_address = casper_backend::backend::Address::from(contract_package_hash);
-                casper_backend::backend::casper_contract::contract_api::runtime::print(&format!("{:?}", casper_address));
-
                 let odra_address: odra::types::Address = casper_address.into();
-                // casper_backend::backend::casper_contract::contract_api::runtime::print(&format!("{:?}", odra_address));
-                // let back = casper_backend::backend::Address::from(&odra_address);
                 let back = casper_backend::casper_commons::odra_address_wrapper::OdraAddressWrapper::new(odra_address);
                 let back: casper_backend::backend::Address = back.into();
-                // casper_backend::backend::casper_contract::contract_api::runtime::print(&format!("{:?}", back));
 
                 let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>(
                     "constructor",

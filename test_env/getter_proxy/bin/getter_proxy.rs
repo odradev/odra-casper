@@ -4,6 +4,7 @@
 extern crate alloc;
 
 use core::mem::MaybeUninit;
+use core::convert::TryInto;
 
 use alloc::{string::String, vec::Vec};
 use casper_contract::{

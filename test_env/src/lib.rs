@@ -1,6 +1,6 @@
 use crate::env::ENV;
-use casper_types::{bytesrepr::Bytes, RuntimeArgs, ContractPackageHash};
-use odra::types::{Address as OdraAddress, OdraError};
+use casper_types::{bytesrepr::Bytes, RuntimeArgs};
+use odra::types::{Address as OdraAddress, OdraError, EventData, event::Error as EventError};
 use casper_commons::{address::Address as CasperAddress, odra_address_wrapper::OdraAddressWrapper};
 
 pub mod env;
@@ -13,8 +13,9 @@ fn backend_name() -> String {
 #[no_mangle]
 fn register_contract(name: &str, args: &RuntimeArgs) -> OdraAddress {
     ENV.with(|env| {
+        let wasm_name = format!("{}.wasm", name);
         env.borrow_mut()
-            .deploy_contract(&format!("{}.wasm", name), args.clone());
+            .deploy_contract(&wasm_name, args.clone());
             
         let contract_package_hash = format!("{}_package_hash", name);
         let contract_package_hash = env.borrow().get_contract_package_hash(&contract_package_hash);
@@ -58,5 +59,13 @@ pub fn get_account(n: usize) -> OdraAddress {
 pub fn get_error() -> Option<OdraError> {
     ENV.with(|env| {
         env.borrow().get_error()
+    })
+}
+
+#[no_mangle]
+pub fn get_event(address: &OdraAddress, index: i32) -> Result<EventData, EventError> {
+    ENV.with(|env| {
+        let odra_address = OdraAddressWrapper::new(address.to_owned());
+        env.borrow().get_event(odra_address.into(), index)
     })
 }
