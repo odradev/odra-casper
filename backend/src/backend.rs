@@ -1,6 +1,6 @@
 pub use casper_contract::{
     self,
-    contract_api::{runtime, storage}
+    contract_api::{runtime, storage},
 };
 use odra::types::{Address as OdraAddress, CLValue, EventData, OdraError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;

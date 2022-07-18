@@ -1,6 +1,6 @@
 # Changelog
 
-Changelog of `odra-casper-backend`.
+Changelog for `odra-casper-backend`.
 
 ## [0.0.1] - 2022-07-18
 ### Added

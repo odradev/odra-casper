@@ -222,7 +222,8 @@ fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
 
 fn get_seed(name: &str) -> URef {
     let mut seeds = SEEDS.lock().unwrap();
-    match seeds.get(name) {
+    let maybe_seed = seeds.get(name);
+    match maybe_seed {
         Some(seed) => *seed,
         None => {
             let key: Key = match runtime::get_key(name) {
