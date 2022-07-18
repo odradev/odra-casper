@@ -1,7 +1,7 @@
 use std::{cell::RefCell, path::PathBuf};
 
 use odra::types::{OdraError, VmError, EventData, event::Error as EventError};
-use casper_commons::address::Address;
+use casper_commons::address::CasperAddress;
 use casper_engine_test_support::{
     DeployItemBuilder, ExecuteRequestBuilder, InMemoryWasmTestBuilder, ARG_AMOUNT,
     DEFAULT_ACCOUNT_INITIAL_BALANCE, DEFAULT_GENESIS_CONFIG, DEFAULT_GENESIS_CONFIG_HASH,
@@ -27,8 +27,8 @@ const EVENTS: &str = "__events";
 const EVENTS_LENGTH: &str = "__events_length";
 
 pub struct CasperTestEnv {
-    accounts: Vec<Address>,
-    active_account: Address,
+    accounts: Vec<CasperAddress>,
+    active_account: CasperAddress,
     context: InMemoryWasmTestBuilder,
     block_time: u64,
     calls_counter: u32,
@@ -38,7 +38,7 @@ pub struct CasperTestEnv {
 impl CasperTestEnv {
     pub fn new() -> Self {
         let mut genesis_config = DEFAULT_GENESIS_CONFIG.clone();
-        let mut accounts: Vec<Address> = Vec::new();
+        let mut accounts: Vec<CasperAddress> = Vec::new();
         for i in 0..20 {
             // Create keypair.
             let secret_key = SecretKey::ed25519_from_bytes([i; 32]).unwrap();
@@ -139,7 +139,7 @@ impl CasperTestEnv {
         result
     }
 
-    pub fn set_caller(&mut self, account: Address) {
+    pub fn set_caller(&mut self, account: CasperAddress) {
         self.active_account = account;
     }
 
@@ -147,11 +147,11 @@ impl CasperTestEnv {
         *self.active_account.as_account_hash().unwrap()
     }
 
-    pub fn get_account(&self, n: usize) -> Address {
+    pub fn get_account(&self, n: usize) -> CasperAddress {
         *self.accounts.get(n).unwrap()
     }
 
-    pub fn as_account(&mut self, account: Address) {
+    pub fn as_account(&mut self, account: CasperAddress) {
         self.active_account = account;
     }
 
@@ -188,7 +188,7 @@ impl CasperTestEnv {
         self.error.clone()
     }
 
-    pub fn get_event(&self, address: Address, index: i32) -> Result<EventData, EventError>  {
+    pub fn get_event(&self, address: CasperAddress, index: i32) -> Result<EventData, EventError>  {
         let address = address.as_contract_package_hash().unwrap().clone();
 
         let contract_hash: ContractHash = self

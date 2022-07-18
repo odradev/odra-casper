@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use casper_types::{bytesrepr::Bytes, RuntimeArgs};
 use odra::types::{Address as OdraAddress, OdraError, EventData, event::Error as EventError};
-use casper_commons::{address::Address as CasperAddress, odra_address_wrapper::OdraAddressWrapper};
+use casper_commons::{address::CasperAddress as CasperAddress, odra_address_wrapper::OdraAddressWrapper};
 
 pub mod env;
 
