@@ -1,18 +1,11 @@
-mod casper_env;
-use lazy_static::lazy_static;
-
-use std::{
-    collections::{hash_map::DefaultHasher, BTreeMap},
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-    sync::Mutex,
-};
-pub use casper_commons::{odra_address_wrapper::OdraAddressWrapper, address::Address};
 pub use casper_contract::{
     self,
-    contract_api::{runtime, storage},
+    contract_api::{runtime, storage}
 };
-use odra::types::{URef, Key, Address as OdraAddress, CLValue, ContractPackageHash, RuntimeArgs, EventData, OdraError};
+use odra::types::{Address as OdraAddress, CLValue, EventData, OdraError, RuntimeArgs};
+pub use odra_casper_shared::casper_address::CasperAddress;
+
+mod casper_env;
 
 #[no_mangle]
 pub fn __get_blocktime() -> u64 {
@@ -21,7 +14,12 @@ pub fn __get_blocktime() -> u64 {
 
 #[no_mangle]
 pub fn __caller() -> OdraAddress {
-    casper_env::caller().into()
+    OdraAddress::try_from(casper_env::caller()).unwrap()
+}
+
+#[no_mangle]
+pub fn __self_address() -> OdraAddress {
+    OdraAddress::try_from(casper_env::self_address()).unwrap()
 }
 
 #[no_mangle]
@@ -52,7 +50,7 @@ fn __get_dict_value(dict: &[u8], key: &[u8]) -> Option<CLValue> {
 fn __revert(reason: &OdraError) -> ! {
     let code = match reason {
         OdraError::ExecutionError(code, _) => *code,
-        _ => 0
+        _ => 0,
     };
     casper_env::revert(code);
 }
@@ -64,8 +62,8 @@ fn __print(message: &str) {
 
 #[no_mangle]
 pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs) -> Vec<u8> {
-    let address: Address = OdraAddressWrapper::new(*address).into(); 
-    casper_env::call_contract(address, entrypoint, args.clone())
+    let casper_address = CasperAddress::try_from(*address).unwrap();
+    casper_env::call_contract(casper_address, entrypoint, args.clone())
 }
 
 #[no_mangle]
@@ -73,8 +71,7 @@ fn __emit_event(event: &EventData) {
     casper_env::emit_event(event);
 }
 
-// @TODO: rename to 
-pub fn is_named_arg_exist(name: &str) -> bool {
+pub fn named_arg_exists(name: &str) -> bool {
     let mut arg_size: usize = 0;
     let ret = unsafe {
         casper_contract::ext_ffi::casper_get_named_arg_size(
@@ -83,5 +80,5 @@ pub fn is_named_arg_exist(name: &str) -> bool {
             &mut arg_size as *mut usize,
         )
     };
-    odra::types::api_error::result_from(ret).is_ok()
+    casper_types::api_error::result_from(ret).is_ok()
 }

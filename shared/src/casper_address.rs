@@ -1,15 +1,12 @@
 use casper_types::{
     account::AccountHash,
     bytesrepr::{self, FromBytes, ToBytes},
-    CLType, CLTyped, ContractPackageHash, Key, 
+    CLType, CLTyped, ContractPackageHash, Key,
 };
 
 use odra_types::Address as OdraAddress;
 
 /// An enum representing an [`AccountHash`] or a [`ContractPackageHash`].
-///
-/// It is taken from [`CasperLabs's ERC20`](https://raw.githubusercontent.com/casper-ecosystem/erc20/master/erc20/src/address.rs).
-/// It is copied instead of imported for the flexebility.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum CasperAddress {
     /// Represents an account hash.
@@ -37,6 +34,7 @@ impl CasperAddress {
         }
     }
 
+    /// Returns true if `self` is the `Contract` variant.
     pub fn is_contract(&self) -> bool {
         self.as_contract_package_hash().is_some()
     }
@@ -58,7 +56,9 @@ impl From<CasperAddress> for Key {
     fn from(address: CasperAddress) -> Self {
         match address {
             CasperAddress::Account(account_hash) => Key::Account(account_hash),
-            CasperAddress::Contract(contract_package_hash) => Key::Hash(contract_package_hash.value()),
+            CasperAddress::Contract(contract_package_hash) => {
+                Key::Hash(contract_package_hash.value())
+            }
         }
     }
 }
@@ -69,8 +69,10 @@ impl TryFrom<Key> for CasperAddress {
     fn try_from(key: Key) -> Result<Self, Self::Error> {
         match key {
             Key::Account(account_hash) => Ok(CasperAddress::Account(account_hash)),
-            Key::Hash(contract_package_hash) => Ok(CasperAddress::Contract(ContractPackageHash::new(contract_package_hash))),
-            _ => Err(String::from("Unsupport Key type."))
+            Key::Hash(contract_package_hash) => Ok(CasperAddress::Contract(
+                ContractPackageHash::new(contract_package_hash),
+            )),
+            _ => Err(String::from("Unsupport Key type.")),
         }
     }
 }
@@ -97,8 +99,9 @@ impl FromBytes for CasperAddress {
 
         let address = match key {
             Key::Account(account_hash) => CasperAddress::Account(account_hash),
-            Key::Hash(raw_contract_package_hash) =>
-                CasperAddress::Contract(ContractPackageHash::new(raw_contract_package_hash)),
+            Key::Hash(raw_contract_package_hash) => {
+                CasperAddress::Contract(ContractPackageHash::new(raw_contract_package_hash))
+            }
             _ => return Err(bytesrepr::Error::Formatting),
         };
 
@@ -106,17 +109,21 @@ impl FromBytes for CasperAddress {
     }
 }
 
-impl Into<OdraAddress> for CasperAddress {
-    fn into(self) -> OdraAddress {
-        OdraAddress::new(&self.to_bytes().unwrap())
+impl TryFrom<CasperAddress> for OdraAddress {
+    type Error = bytesrepr::Error;
+
+    fn try_from(value: CasperAddress) -> Result<Self, Self::Error> {
+        let bytes = value.to_bytes()?;
+        Ok(OdraAddress::new(&bytes))
     }
 }
 
-impl From<&OdraAddress> for CasperAddress {
-    fn from(address: &OdraAddress) -> Self {
-        let bytes = address.bytes();
-        //TODO to add error handling
-        <CasperAddress as FromBytes>::from_bytes(bytes).unwrap().0
+impl TryFrom<OdraAddress> for CasperAddress {
+    type Error = bytesrepr::Error;
+
+    fn try_from(value: OdraAddress) -> Result<Self, Self::Error> {
+        let (casper_address, _) = CasperAddress::from_bytes(value.bytes())?;
+        Ok(casper_address)
     }
 }
 
@@ -125,8 +132,10 @@ mod tests {
     use super::*;
 
     // TODO: casper-types > 1.5.0 will have prefix fixed.
-    const CONTRACT_PACKAGE_HASH: &str = "contract-package-wasm7ba9daac84bebee8111c186588f21ebca35550b6cf1244e71768bd871938be6a";
-    const ACCOUNT_HASH: &str = "account-hash-3b4ffcfb21411ced5fc1560c3f6ffed86f4885e5ea05cde49d90962a48a14d95";
+    const CONTRACT_PACKAGE_HASH: &str =
+        "contract-package-wasm7ba9daac84bebee8111c186588f21ebca35550b6cf1244e71768bd871938be6a";
+    const ACCOUNT_HASH: &str =
+        "account-hash-3b4ffcfb21411ced5fc1560c3f6ffed86f4885e5ea05cde49d90962a48a14d95";
 
     fn mock_account_hash() -> AccountHash {
         AccountHash::from_formatted_str(ACCOUNT_HASH).unwrap()
@@ -139,7 +148,7 @@ mod tests {
     #[test]
     fn test_casper_address_account_hash_conversion() {
         let account_hash = mock_account_hash();
-        
+
         // It is possible to convert CasperAddress back to AccountHash.
         let casper_address = CasperAddress::from(account_hash);
         assert_eq!(casper_address.as_account_hash().unwrap(), &account_hash);
@@ -150,22 +159,19 @@ mod tests {
         // And it is not a contract.
         assert!(!casper_address.is_contract());
 
-        // It can be converted into a Key and back to CasperAddress.
-        let key = Key::from(casper_address);
-        let restored = CasperAddress::try_from(key);
-        assert_eq!(restored.unwrap(), casper_address);
-
-        // It can be converted into bytes and back.
-        let bytes = casper_address.to_bytes().unwrap();
+        test_casper_address_conversions(casper_address);
     }
 
     #[test]
     fn test_casper_address_contract_package_hash_conversion() {
         let contract_package_hash = mock_contract_package_hash();
         let casper_address = CasperAddress::from(contract_package_hash);
-        
+
         // It is possible to convert CasperAddress back to ContractPackageHash.
-        assert_eq!(casper_address.as_contract_package_hash().unwrap(), &contract_package_hash);
+        assert_eq!(
+            casper_address.as_contract_package_hash().unwrap(),
+            &contract_package_hash
+        );
 
         // It is not possible to convert CasperAddress to AccountHash.
         assert!(casper_address.as_account_hash().is_none());
@@ -173,10 +179,20 @@ mod tests {
         // And it is a contract.
         assert!(casper_address.is_contract());
 
+        test_casper_address_conversions(casper_address);
+    }
+
+    fn test_casper_address_conversions(casper_address: CasperAddress) {
         // It can be converted into a Key and back to CasperAddress.
         let key = Key::from(casper_address);
         let restored = CasperAddress::try_from(key);
         assert_eq!(restored.unwrap(), casper_address);
+
+        // It can be converted into bytes and back.
+        let bytes = casper_address.to_bytes().unwrap();
+        let (restored, rest) = CasperAddress::from_bytes(&bytes).unwrap();
+        assert!(rest.is_empty());
+        assert_eq!(restored, casper_address);
     }
 
     #[test]
@@ -185,6 +201,34 @@ mod tests {
         assert_eq!(
             CasperAddress::try_from(bad_key),
             Err(String::from("Unsupport Key type."))
+        );
+    }
+
+    #[test]
+    fn test_casper_address_account_hash_to_odra_address_conversion_() {
+        let casper_address = CasperAddress::from(mock_account_hash());
+        test_casper_address_to_odra_address_conversion(casper_address);
+    }
+
+    #[test]
+    fn test_casper_address_contract_package_hash_to_odra_address_conversion_() {
+        let casper_address = CasperAddress::from(mock_contract_package_hash());
+        test_casper_address_to_odra_address_conversion(casper_address);
+    }
+
+    fn test_casper_address_to_odra_address_conversion(casper_address: CasperAddress) {
+        let odra_address = OdraAddress::try_from(casper_address).unwrap();
+        let restored = CasperAddress::try_from(odra_address).unwrap();
+        assert_eq!(restored, casper_address);
+    }
+
+    #[test]
+    fn test_casper_address_from_bad_odra_address_fails() {
+        // Only 0 and 1 is allowd to be on the first place.
+        let odra_address = OdraAddress::new(&[2, 2, 3]);
+        assert_eq!(
+            CasperAddress::try_from(odra_address),
+            Err(bytesrepr::Error::Formatting)
         );
     }
 }
