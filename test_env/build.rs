@@ -16,7 +16,7 @@ fn main() {
             "--bin",
             "getter_proxy",
             "--target",
-            "wasm32-unknown-unknown"
+            "wasm32-unknown-unknown",
         ])
         .output()
         .expect("Couldn't build getter proxy");
@@ -33,4 +33,3 @@ fn main() {
         }
     }
 }
-	
