@@ -3,17 +3,21 @@
 
 extern crate alloc;
 
-use core::mem::MaybeUninit;
 use core::convert::TryInto;
+use core::mem::MaybeUninit;
 
 use alloc::{string::String, vec::Vec};
+use casper_contract::contract_api::storage;
 use casper_contract::{
     contract_api::{self, runtime},
     ext_ffi,
     unwrap_or_revert::UnwrapOrRevert,
 };
-use casper_contract::contract_api::storage;
-use casper_types::{api_error, bytesrepr::{Bytes, FromBytes, ToBytes}, ApiError, ContractPackageHash, ContractVersion, RuntimeArgs, CLTyped};
+use casper_types::{
+    api_error,
+    bytesrepr::{Bytes, FromBytes, ToBytes},
+    ApiError, CLTyped, ContractPackageHash, ContractVersion, RuntimeArgs,
+};
 
 #[no_mangle]
 fn call() {

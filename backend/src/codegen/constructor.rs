@@ -28,7 +28,7 @@ impl ToTokens for WasmConstructor<'_> {
         let ref_ident = &self.1;
         let constructor_matching: proc_macro2::TokenStream = data
             .iter()
-            .map(|(entrypoint_ident, casper_args, fn_args)| {
+            .flat_map(|(entrypoint_ident, casper_args, fn_args)| {
                 quote! {
                     stringify!(#entrypoint_ident) => {
                         let contract_ref = #ref_ident::at(odra_address);
@@ -37,11 +37,10 @@ impl ToTokens for WasmConstructor<'_> {
                     },
                 }
             })
-            .flatten()
             .collect();
 
         tokens.extend(quote! {
-            if casper_backend::backend::is_named_arg_exist("constructor") {
+            if casper_backend::backend::named_arg_exists("constructor") {
                 use casper_backend::backend::casper_contract::unwrap_or_revert::UnwrapOrRevert;
                 let constructor_access: odra::types::URef =
                     casper_backend::backend::casper_contract::contract_api::storage::create_contract_user_group(
@@ -54,10 +53,8 @@ impl ToTokens for WasmConstructor<'_> {
                     .pop()
                     .unwrap_or_revert();
 
-                let casper_address = casper_backend::backend::Address::from(contract_package_hash);
-                let odra_address: odra::types::Address = casper_address.into();
-                let back = casper_backend::casper_commons::odra_address_wrapper::OdraAddressWrapper::new(odra_address);
-                let back: casper_backend::backend::Address = back.into();
+                let casper_address = casper_backend::backend::CasperAddress::from(contract_package_hash);
+                let odra_address = odra::types::Address::try_from(casper_address).unwrap_or_revert();
 
                 let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>(
                     "constructor",

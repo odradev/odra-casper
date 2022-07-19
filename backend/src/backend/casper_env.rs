@@ -1,19 +1,22 @@
-use std::{collections::{BTreeSet, BTreeMap}, sync::Mutex};
+use lazy_static::lazy_static;
+use std::{collections::BTreeMap, sync::Mutex};
 
-use casper_commons::address::Address;
 use casper_contract::{
-    contract_api::{self, runtime, storage::{self, dictionary_put}},
+    contract_api::{
+        self, runtime,
+        storage::{self, dictionary_put},
+    },
     unwrap_or_revert::UnwrapOrRevert,
 };
-use lazy_static::lazy_static;
-use odra::types::{
+use casper_types::{
     api_error,
     bytesrepr::{Bytes, FromBytes, ToBytes},
-    contracts::NamedKeys,
     system::CallStackElement,
-    ApiError, CLTyped, CLValue, ContractPackageHash, ContractVersion, EntryPoints, RuntimeArgs,
-    URef, Key, EventData,
+    ApiError, CLTyped, CLValue, ContractVersion, Key, RuntimeArgs, URef,
 };
+
+use odra::types::EventData;
+use odra_casper_shared::casper_address::CasperAddress;
 
 lazy_static! {
     static ref SEEDS: Mutex<BTreeMap<String, URef>> = Mutex::new(BTreeMap::new());
@@ -21,7 +24,6 @@ lazy_static! {
 
 const EVENTS: &str = "__events";
 const EVENTS_LENGTH: &str = "__events_length";
-
 
 /// Save value to the storage.
 pub fn set_cl_value(name: &str, value: CLValue) {
@@ -69,7 +71,8 @@ pub fn set_dict_value(seed: &str, key: &[u8], value: &CLValue) {
 
 pub fn get_dict_value(seed: &str, key: &[u8]) -> Option<CLValue> {
     let seed = get_seed(seed);
-    let bytes: Option<Bytes> = storage::dictionary_get(seed, &to_dictionary_key(key)).unwrap_or_revert();
+    let bytes: Option<Bytes> =
+        storage::dictionary_get(seed, &to_dictionary_key(key)).unwrap_or_revert();
     bytes.map(|bytes| {
         let (result, _rest) = CLValue::from_bytes(&bytes).unwrap_or_revert();
         result
@@ -80,18 +83,18 @@ pub fn get_dict_value(seed: &str, key: &[u8]) -> Option<CLValue> {
 ///
 /// For `Session` and `StoredSession` variants it will return account hash, and for `StoredContract`
 /// case it will use contract hash as the address.
-fn call_stack_element_to_address(call_stack_element: CallStackElement) -> Address {
+fn call_stack_element_to_address(call_stack_element: CallStackElement) -> CasperAddress {
     match call_stack_element {
-        CallStackElement::Session { account_hash } => Address::from(account_hash),
+        CallStackElement::Session { account_hash } => CasperAddress::from(account_hash),
         CallStackElement::StoredSession { account_hash, .. } => {
             // Stored session code acts in account's context, so if stored session
             // wants to interact, caller's address will be used.
-            Address::from(account_hash)
+            CasperAddress::from(account_hash)
         }
         CallStackElement::StoredContract {
             contract_package_hash,
             ..
-        } => Address::from(contract_package_hash),
+        } => CasperAddress::from(contract_package_hash),
     }
 }
 
@@ -106,13 +109,13 @@ fn take_call_stack_elem(n: usize) -> CallStackElement {
 ///
 /// This function ensures that only session code can execute this function, and disallows stored
 /// session/stored contracts.
-pub fn caller() -> Address {
+pub fn caller() -> CasperAddress {
     let second_elem = take_call_stack_elem(1);
     call_stack_element_to_address(second_elem)
 }
 
 /// Gets the address of the currently run contract
-pub fn self_address() -> Address {
+pub fn self_address() -> CasperAddress {
     let first_elem = take_call_stack_elem(0);
     call_stack_element_to_address(first_elem)
 }
@@ -133,7 +136,11 @@ pub fn to_dictionary_key(key: &[u8]) -> String {
 }
 
 /// Calls a contract method by Address
-pub fn call_contract(address: Address, entry_point: &str, runtime_args: RuntimeArgs) -> Vec<u8> {
+pub fn call_contract(
+    address: CasperAddress,
+    entry_point: &str,
+    runtime_args: RuntimeArgs,
+) -> Vec<u8> {
     let contract_package_hash = address.as_contract_package_hash().unwrap_or_revert();
     let contract_version: Option<ContractVersion> = None;
 
@@ -162,7 +169,7 @@ pub fn call_contract(address: Address, entry_point: &str, runtime_args: RuntimeA
         unsafe { bytes_written.assume_init() }
     };
 
-    let serialized_result = if bytes_written == 0 {
+    if bytes_written == 0 {
         // If no bytes were written, the host buffer hasn't been set and hence shouldn't be read.
         vec![]
     } else {
@@ -175,34 +182,7 @@ pub fn call_contract(address: Address, entry_point: &str, runtime_args: RuntimeA
 
         read_host_buffer_into(&mut dest).unwrap_or_revert();
         dest
-    };
-    serialized_result
-}
-
-pub fn install_contract(
-    package_hash: &str,
-    entry_points: EntryPoints,
-    initializer: impl FnOnce(ContractPackageHash),
-) {
-    // Create a new contract package hash for the contract.
-    let (contract_package_hash, _) = storage::create_contract_package_at_hash();
-    runtime::put_key(package_hash, contract_package_hash.into());
-    storage::add_contract_version(contract_package_hash, entry_points, NamedKeys::new());
-
-    let init_access: URef =
-        storage::create_contract_user_group(contract_package_hash, "init", 1, Default::default())
-            .unwrap_or_revert()
-            .pop()
-            .unwrap_or_revert();
-
-    // Call contrustor method.
-    initializer(contract_package_hash);
-
-    // Revoke access to init.
-    let mut urefs = BTreeSet::new();
-    urefs.insert(init_access);
-    storage::remove_contract_user_group_urefs(contract_package_hash, "init", urefs)
-        .unwrap_or_revert();
+    }
 }
 
 pub fn get_block_time() -> u64 {
@@ -242,7 +222,8 @@ fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
 
 fn get_seed(name: &str) -> URef {
     let mut seeds = SEEDS.lock().unwrap();
-    match seeds.get(name) {
+    let maybe_seed = seeds.get(name);
+    match maybe_seed {
         Some(seed) => *seed,
         None => {
             let key: Key = match runtime::get_key(name) {

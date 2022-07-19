@@ -2,7 +2,8 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
-    if Path::new("getter_proxy.wasm").exists() {
+    let path = "getter_proxy/target/wasm32-unknown-unknown/release/getter_proxy.wasm";
+    if Path::new(path).exists() {
         return;
     }
 
@@ -15,19 +16,12 @@ fn main() {
             "--bin",
             "getter_proxy",
             "--target",
-            "wasm32-unknown-unknown"
+            "wasm32-unknown-unknown",
         ])
         .output()
         .expect("Couldn't build getter proxy");
 
-    let source = "getter_proxy/target/wasm32-unknown-unknown/release/getter_proxy.wasm";
-    let target = "./getter_proxy.wasm";
-    Command::new("cp")
-        .args(vec![source, target])
-        .output()
-        .expect("Couldn't copy getter proxy");
-
-    let wasm_output = Command::new("wasm-strip").arg("getter_proxy.wasm").output();
+    let wasm_output = Command::new("wasm-strip").arg(path).output();
 
     match wasm_output {
         Ok(_) => {}

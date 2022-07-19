@@ -1,11 +1,8 @@
-use convert_case::Casing;
+use self::{call::ContractEntrypoints, constructor::WasmConstructor, entrypoints::WasmEntrypoint};
 use odra::contract_def::{ContractDef, EntrypointType};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-use syn::punctuated::Punctuated;
-use syn::{Path, PathSegment, Token};
-
-use self::{call::ContractEntrypoints, constructor::WasmConstructor, entrypoints::WasmEntrypoint};
+use syn::{punctuated::Punctuated, Path, PathSegment, Token};
 
 mod arg;
 mod call;
@@ -14,7 +11,6 @@ mod entrypoints;
 mod ty;
 
 // TODO: Put those functions into trait inside odra, so each backend will implement them
-
 pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
     let entrypoints = generate_entrypoints(&contract_def, fqn.clone());
     let call_fn = generate_call(&contract_def, fqn + "Ref");
@@ -36,8 +32,7 @@ fn generate_entrypoints(contract_def: &ContractDef, fqn: String) -> TokenStream2
     contract_def
         .entrypoints
         .iter()
-        .map(|ep| WasmEntrypoint(&ep, path).to_token_stream())
-        .flatten()
+        .flat_map(|ep| WasmEntrypoint(ep, path).to_token_stream())
         .collect::<TokenStream2>()
 }
 
@@ -83,9 +78,8 @@ fn fqn_to_path(fqn: String) -> Path {
             .map(|ident| PathSegment::from(format_ident!("{}", ident))),
     );
 
-    let path = syn::Path {
+    syn::Path {
         leading_colon: None,
         segments,
-    };
-    path
+    }
 }
