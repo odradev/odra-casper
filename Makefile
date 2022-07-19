@@ -6,11 +6,7 @@ test:
 	cd shared && cargo test
 	cd backend && cargo test
 
-build-getter-proxy:
-	cd test_env/getter_proxy && cargo build --release --target wasm32-unknown-unknown
-	wasm-strip test_env/getter_proxy/target/wasm32-unknown-unknown/release/getter_proxy.wasm
-
-build-test-env: build-getter-proxy
+build-test-env:
 	cd test_env && cargo build --release
 
 clippy:
