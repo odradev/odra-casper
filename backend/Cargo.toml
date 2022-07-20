@@ -21,5 +21,5 @@ pretty_assertions = "1.2.1"
 lazy_static = "1.4.0"
 
 odra = { git = "https://github.com/odradev/odra.git", branch = "develop", default-features = false, features = [ "wasm" ] }
-# odra = { path = "/home/ziel/workspace/odra/odra/core", default-features = false, features = ["wasm"] }
+# odra = { path = "../../../odra/core", default-features = false, features = ["wasm"] }
 odra-casper-shared = { path = "../shared" }
