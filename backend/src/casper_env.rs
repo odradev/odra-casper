@@ -127,7 +127,7 @@ pub fn emit_event(event: &EventData) {
             let key = storage::new_uref(0u32);
             runtime::put_key(EVENTS_LENGTH, Key::from(key));
             (0u32, key)
-        },
+        }
         Some(value) => {
             let key = value.try_into().unwrap_or_revert();
             let value = storage::read(key).unwrap_or_revert().unwrap_or_revert();
