@@ -8,14 +8,14 @@ use casper_engine_test_support::{
 use casper_execution_engine::core::engine_state::{
     self, run_genesis_request::RunGenesisRequest, GenesisAccount,
 };
-pub use casper_execution_engine::core::execution::Error as ExecutionError;
+pub use casper_execution_engine::core::execution::Error as CasperExecutionError;
 use casper_types::{
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     runtime_args, ApiError, CLTyped, ContractHash, ContractPackageHash, Key, Motes, PublicKey,
     RuntimeArgs, SecretKey, URef, U512,
 };
-use odra::types::{event::Error as EventError, EventData, OdraError, VmError};
+use odra::types::{event::EventError, EventData, ExecutionError, OdraError, VmError};
 use odra_casper_shared::casper_address::CasperAddress;
 
 thread_local! {
@@ -221,7 +221,7 @@ impl CasperTestEnv {
             .into_t()
             .unwrap();
 
-        let event_position: u32 = odra::test_utils::event_absolute_position(events_length, index)?;
+        let event_position = odra::utils::event_absolute_position(events_length as usize, index)?;
 
         match self.context.query_dictionary_item(
             None,
@@ -251,9 +251,13 @@ impl Default for CasperTestEnv {
 fn parse_error(err: engine_state::Error) -> OdraError {
     if let engine_state::Error::Exec(exec_err) = err {
         match exec_err {
-            ExecutionError::Revert(ApiError::User(id)) => OdraError::execution_err(id, ""),
-            ExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
-            ExecutionError::NoSuchMethod(name) => OdraError::VmError(VmError::NoSuchMethod(name)),
+            CasperExecutionError::Revert(ApiError::User(id)) => {
+                OdraError::ExecutionError(ExecutionError::new(id, ""))
+            }
+            CasperExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
+            CasperExecutionError::NoSuchMethod(name) => {
+                OdraError::VmError(VmError::NoSuchMethod(name))
+            }
             _ => OdraError::VmError(VmError::Other(format!("Casper ExecError: {}", exec_err))),
         }
     } else {
