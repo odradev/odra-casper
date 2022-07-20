@@ -5,7 +5,7 @@ pub use casper_contract::{
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;
 
-mod casper_env;
+use crate::casper_env;
 
 #[no_mangle]
 pub fn __get_blocktime() -> u64 {
@@ -23,26 +23,22 @@ pub fn __self_address() -> OdraAddress {
 }
 
 #[no_mangle]
-pub fn __set_var(key: &[u8], value: &CLValue) {
-    let name = std::str::from_utf8(key).unwrap();
-    casper_env::set_cl_value(name, value.clone());
+pub fn __set_var(key: &str, value: &CLValue) {
+    casper_env::set_cl_value(key, value.clone());
 }
 
 #[no_mangle]
-fn __get_var(key: &[u8]) -> Option<CLValue> {
-    let name = std::str::from_utf8(key).unwrap();
-    casper_env::get_cl_value(name)
+fn __get_var(key: &str) -> Option<CLValue> {
+    casper_env::get_cl_value(key)
 }
 
 #[no_mangle]
-fn __set_dict_value(dict: &[u8], key: &[u8], value: &CLValue) {
-    let dict = std::str::from_utf8(dict).unwrap();
+fn __set_dict_value(dict: &str, key: &[u8], value: &CLValue) {
     casper_env::set_dict_value(dict, key, value);
 }
 
 #[no_mangle]
-fn __get_dict_value(dict: &[u8], key: &[u8]) -> Option<CLValue> {
-    let dict = std::str::from_utf8(dict).unwrap();
+fn __get_dict_value(dict: &str, key: &[u8]) -> Option<CLValue> {
     casper_env::get_dict_value(dict, key)
 }
 

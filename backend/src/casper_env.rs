@@ -122,11 +122,21 @@ pub fn self_address() -> CasperAddress {
 
 /// Record event to the contract's storage.
 pub fn emit_event(event: &EventData) {
-    // TODO: Optimalize get_key and set_key
-    let events_length: u32 = get_key(EVENTS_LENGTH).unwrap_or_default();
+    let (events_length, key): (u32, URef) = match runtime::get_key(EVENTS_LENGTH) {
+        None => {
+            let key = storage::new_uref(0u32);
+            runtime::put_key(EVENTS_LENGTH, Key::from(key));
+            (0u32, key)
+        }
+        Some(value) => {
+            let key = value.try_into().unwrap_or_revert();
+            let value = storage::read(key).unwrap_or_revert().unwrap_or_revert();
+            (value, key)
+        }
+    };
     let events_seed: URef = get_seed(EVENTS);
     dictionary_put(events_seed, &events_length.to_string(), event.clone());
-    set_key(EVENTS_LENGTH, events_length + 1);
+    storage::write(key, events_length + 1);
 }
 
 /// Convert any key to hash.
