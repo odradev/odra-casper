@@ -2,7 +2,7 @@ pub use casper_contract::{
     self,
     contract_api::{runtime, storage},
 };
-use odra::types::{Address as OdraAddress, CLValue, EventData, OdraError, RuntimeArgs};
+use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;
 
 mod casper_env;
@@ -47,12 +47,8 @@ fn __get_dict_value(dict: &[u8], key: &[u8]) -> Option<CLValue> {
 }
 
 #[no_mangle]
-fn __revert(reason: &OdraError) -> ! {
-    let code = match reason {
-        OdraError::ExecutionError(code, _) => *code,
-        _ => 0,
-    };
-    casper_env::revert(code);
+fn __revert(reason: &ExecutionError) -> ! {
+    casper_env::revert(reason.code());
 }
 
 #[no_mangle]
