@@ -19,7 +19,7 @@ pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
         #![no_main]
 
         use odra::instance::Instance;
-        use casper_backend;
+        use odra_casper_backend as casper_backend;
 
         #call_fn
 
