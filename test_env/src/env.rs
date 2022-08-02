@@ -101,10 +101,7 @@ impl CasperTestEnv {
     ) -> Option<Bytes> {
         self.error = None;
 
-        let session_code = include_bytes!(
-            "../getter_proxy/target/wasm32-unknown-unknown/release/getter_proxy.wasm"
-        )
-        .to_vec();
+        let session_code = include_bytes!("../getter_proxy.wasm").to_vec();
         let args_bytes: Vec<u8> = args.to_bytes().unwrap();
         let args = runtime_args! {
             "contract_package_hash" => hash,
