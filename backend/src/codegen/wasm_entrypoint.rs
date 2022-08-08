@@ -42,3 +42,45 @@ impl ToTokens for WasmEntrypoint<'_> {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::codegen::assert_eq_tokens;
+    use odra::contract_def::{Argument, EntrypointType};
+    use odra::types::CLType;
+
+    use super::*;
+
+    #[test]
+    fn test_constructor() {
+        let entrypoint = Entrypoint {
+            ident: String::from("construct_me"),
+            args: vec![Argument {
+                ident: String::from("value"),
+                ty: CLType::I32,
+            }],
+            ret: CLType::Unit,
+            ty: EntrypointType::Public,
+        };
+        let path: Path = syn::parse2(
+            quote! {
+                my_contract::MyContract
+            }
+            .to_token_stream(),
+        )
+        .unwrap();
+
+        let wasm_entrypoint = WasmEntrypoint(&entrypoint, &path);
+        assert_eq_tokens(
+            wasm_entrypoint,
+            quote!(
+                #[no_mangle]
+                fn construct_me() {
+                    let contract = my_contract::MyContract::instance("contract");
+                    let value = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg(stringify!(value));
+                    contract.construct_me(value);
+                }
+            ),
+        );
+    }
+}

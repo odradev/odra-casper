@@ -70,43 +70,40 @@ impl ToTokens for EntrypointParams<'_> {
 
 #[cfg(test)]
 mod test {
-    // use std::vec;
+    use super::*;
+    use crate::codegen::assert_eq_tokens;
+    use odra::types::CLType;
 
-    // use odra::contract_def::{Entrypoint, EntrypointType};
-    // use pretty_assertions::assert_str_eq;
-    // use quote::ToTokens;
-
-    // use super::ContractEntrypoints;
-
-    // #[test]
-    // fn parse_cl_type() {
-    //     let a = vec![Entrypoint {
-    //         ident: "A".to_string(),
-    //         args: vec![],
-    //         ret: odra::types::CLType::Map {
-    //             key: Box::new(odra::types::CLType::Bool),
-    //             value: Box::new(odra::types::CLType::U128),
-    //         },
-    //         ty: EntrypointType::Public,
-    //     }];
-    //     let ep = ContractEntrypoints(&a);
-    //     let result = ep.to_token_stream();
-
-    //     assert_str_eq!(
-    //         result.to_string(),
-    //         quote::quote! {
-    //             let mut entry_points = odra::types::EntryPoints::new();
-    //             entry_points.add_entry_point(
-    //                 odra::types::EntryPoint::new(
-    //                     stringify!(A),
-    //                     Vec::<odra::types::Parameter>::new(),
-    //                     odra::types::CLType::Bool,
-    //                     odra::types::EntryPointAccess::Public,
-    //                     odra::types::EntryPointType::Contract,
-    //                 )
-    //             );
-    //         }
-    //         .to_string()
-    //     );
-    // }
+    #[test]
+    fn parse_cl_type() {
+        let a = vec![Entrypoint {
+            ident: String::from("call_me"),
+            args: vec![Argument {
+                ident: String::from("value"),
+                ty: CLType::I32,
+            }],
+            ret: CLType::Bool,
+            ty: EntrypointType::Public,
+        }];
+        let ep = ContractEntrypoints(&a);
+        assert_eq_tokens(
+            ep,
+            quote! {
+                let mut entry_points = odra::types::EntryPoints::new();
+                entry_points.add_entry_point(
+                    odra::types::EntryPoint::new(
+                        stringify!(call_me),
+                        {
+                            let mut params: Vec<odra::types::Parameter> = Vec::new();
+                            params.push(odra::types::Parameter::new(stringify!(value), odra::types::CLType::I32));
+                            params
+                        },
+                        odra::types::CLType::Bool,
+                        odra::types::EntryPointAccess::Public,
+                        odra::types::EntryPointType::Contract,
+                    )
+                );
+            },
+        );
+    }
 }
