@@ -26,7 +26,7 @@ impl ToTokens for WasmEntrypoint<'_> {
                 use casper_backend::backend::casper_contract::unwrap_or_revert::UnwrapOrRevert;
                 #args
                 let result = contract.#entrypoint_ident(#fn_args);
-                let result = odra::types::CLValue::from_t(result).unwrap_or_revert();
+                let result = casper_backend::backend::casper_types::CLValue::from_t(result).unwrap_or_revert();
                 casper_backend::backend::casper_contract::contract_api::runtime::ret(result);
             },
         };

@@ -203,9 +203,9 @@ pub fn revert(error: u16) -> ! {
     runtime::revert(ApiError::User(error))
 }
 
-pub fn print(message: &str) {
-    runtime::print(message)
-}
+// pub fn print(message: &str) {
+//     runtime::print(message)
+// }
 
 fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     let bytes = t.into_bytes().unwrap_or_revert();
