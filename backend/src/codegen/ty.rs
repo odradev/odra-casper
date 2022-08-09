@@ -82,3 +82,31 @@ impl ToTokens for WrappedType<'_> {
         tokens.extend(stream);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::assert_eq_tokens;
+
+    #[test]
+    fn test_simple_type() {
+        let ty = CLType::Bool;
+        let wrapped_type = WrappedType(&ty);
+        assert_eq_tokens(wrapped_type, quote!(odra::types::CLType::Bool));
+    }
+
+    #[test]
+    fn test_complex_type() {
+        let ty = CLType::Option(Box::new(CLType::Tuple2([
+            Box::new(CLType::Bool),
+            Box::new(CLType::I32),
+        ])));
+        let wrapped_type = WrappedType(&ty);
+        assert_eq_tokens(
+            wrapped_type,
+            quote!(odra::types::CLType::Option(Box::new(
+                odra::types::CLType::Tuple2([odra::types::CLType::Bool, odra::types::CLType::I32])
+            ))),
+        );
+    }
+}
