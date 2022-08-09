@@ -1,6 +1,6 @@
 [package]
-name = "getter_proxy"
-version = "0.1.0"
+name = "odra-casper-getter-proxy"
+version = "0.0.1"
 edition = "2021"
 
 [dependencies]

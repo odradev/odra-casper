@@ -1,15 +1,15 @@
 [package]
-name = "casper_test_env"
-version = "0.1.0"
+name = "odra-casper-test-env"
+version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-odra = { git = "https://github.com/odradev/odra.git", default-features = false, features = [ "wasm-test" ] }
-# odra = { path = "../../../odra/core", default-features = false, features = [ "wasm-test" ] }
-casper-commons = { path = "../common", features = [ "wasm-test" ] }
 casper-engine-test-support = { version = "2.0.3", features = ["test-support"] }
 casper-execution-engine = { version = "2.0.0" }
 casper-types = "1.5.0"
+
+odra-casper-shared = { version = "0.0.1", path = "../shared" }
+odra = { version = "0.0.1", default-features = false, features = [ "wasm-test" ] }
 
 [lib]
 crate-type = ["cdylib"]

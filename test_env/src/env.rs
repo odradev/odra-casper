@@ -1,23 +1,22 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use odra::types::{OdraError, VmError, EventData, event::Error as EventError};
-use casper_commons::address::Address;
 use casper_engine_test_support::{
     DeployItemBuilder, ExecuteRequestBuilder, InMemoryWasmTestBuilder, ARG_AMOUNT,
     DEFAULT_ACCOUNT_INITIAL_BALANCE, DEFAULT_GENESIS_CONFIG, DEFAULT_GENESIS_CONFIG_HASH,
     DEFAULT_PAYMENT,
 };
-use casper_execution_engine::core::engine_state::{ self,
-    run_genesis_request::RunGenesisRequest, GenesisAccount,
+use casper_execution_engine::core::engine_state::{
+    self, run_genesis_request::RunGenesisRequest, GenesisAccount,
 };
+pub use casper_execution_engine::core::execution::Error as CasperExecutionError;
 use casper_types::{
-    ApiError,
     account::AccountHash,
     bytesrepr::{Bytes, FromBytes, ToBytes},
-    runtime_args, CLTyped, ContractPackageHash, Key, Motes, PublicKey, RuntimeArgs, SecretKey,
-    U512, URef, ContractHash,
+    runtime_args, ApiError, CLTyped, ContractHash, ContractPackageHash, Key, Motes, PublicKey,
+    RuntimeArgs, SecretKey, URef, U512,
 };
-pub use casper_execution_engine::core::execution::Error as ExecutionError;
+use odra::types::{event::EventError, EventData, ExecutionError, OdraError, VmError};
+use odra_casper_shared::casper_address::CasperAddress;
 
 thread_local! {
     pub static ENV: RefCell<CasperTestEnv> = RefCell::new(CasperTestEnv::new());
@@ -27,18 +26,18 @@ const EVENTS: &str = "__events";
 const EVENTS_LENGTH: &str = "__events_length";
 
 pub struct CasperTestEnv {
-    accounts: Vec<Address>,
-    active_account: Address,
+    accounts: Vec<CasperAddress>,
+    active_account: CasperAddress,
     context: InMemoryWasmTestBuilder,
     block_time: u64,
     calls_counter: u32,
-    error: Option<OdraError>
+    error: Option<OdraError>,
 }
 
 impl CasperTestEnv {
     pub fn new() -> Self {
         let mut genesis_config = DEFAULT_GENESIS_CONFIG.clone();
-        let mut accounts: Vec<Address> = Vec::new();
+        let mut accounts: Vec<CasperAddress> = Vec::new();
         for i in 0..20 {
             // Create keypair.
             let secret_key = SecretKey::ed25519_from_bytes([i; 32]).unwrap();
@@ -67,12 +66,12 @@ impl CasperTestEnv {
         builder.run_genesis(&run_genesis_request).commit();
 
         Self {
-            active_account: accounts[0].clone(),
+            active_account: accounts[0],
             context: builder,
             accounts,
             block_time: 0,
             calls_counter: 0,
-            error: None
+            error: None,
         }
     }
 
@@ -126,20 +125,17 @@ impl CasperTestEnv {
 
         let active_account = self.active_account_hash();
 
-        let result = if self.context.is_error() {
+        if self.context.is_error() {
             self.error = Some(parse_error(self.context.get_error().unwrap()));
             None
         } else if has_return {
-            let result: Bytes = self.get_account_value(active_account, "result");
-            Some(result)
+            Some(self.get_account_value(active_account, "result"))
         } else {
             None
-        };
-
-        result
+        }
     }
 
-    pub fn set_caller(&mut self, account: Address) {
+    pub fn set_caller(&mut self, account: CasperAddress) {
         self.active_account = account;
     }
 
@@ -147,11 +143,11 @@ impl CasperTestEnv {
         *self.active_account.as_account_hash().unwrap()
     }
 
-    pub fn get_account(&self, n: usize) -> Address {
+    pub fn get_account(&self, n: usize) -> CasperAddress {
         *self.accounts.get(n).unwrap()
     }
 
-    pub fn as_account(&mut self, account: Address) {
+    pub fn as_account(&mut self, account: CasperAddress) {
         self.active_account = account;
     }
 
@@ -188,12 +184,12 @@ impl CasperTestEnv {
         self.error.clone()
     }
 
-    pub fn get_event(&self, address: Address, index: i32) -> Result<EventData, EventError>  {
-        let address = address.as_contract_package_hash().unwrap().clone();
+    pub fn get_event(&self, address: CasperAddress, index: i32) -> Result<EventData, EventError> {
+        let address = address.as_contract_package_hash().unwrap();
 
         let contract_hash: ContractHash = self
             .context
-            .get_contract_package(address)
+            .get_contract_package(*address)
             .unwrap()
             .current_contract_hash()
             .unwrap();
@@ -210,7 +206,11 @@ impl CasperTestEnv {
 
         let events_length: u32 = self
             .context
-            .query(None, Key::Hash(contract_hash.value()), &[String::from(EVENTS_LENGTH)])
+            .query(
+                None,
+                Key::Hash(contract_hash.value()),
+                &[String::from(EVENTS_LENGTH)],
+            )
             .unwrap()
             .as_cl_value()
             .unwrap()
@@ -218,7 +218,7 @@ impl CasperTestEnv {
             .into_t()
             .unwrap();
 
-        let event_position: u32 = odra::test_utils::event_absolute_position(events_length, index)?;
+        let event_position = odra::utils::event_absolute_position(events_length as usize, index)?;
 
         match self.context.query_dictionary_item(
             None,
@@ -226,25 +226,38 @@ impl CasperTestEnv {
             &event_position.to_string(),
         ) {
             Ok(val) => {
-                let value: Bytes = val.as_cl_value().unwrap().clone().into_t::<Bytes>().unwrap();
+                let value: Bytes = val
+                    .as_cl_value()
+                    .unwrap()
+                    .clone()
+                    .into_t::<Bytes>()
+                    .unwrap();
                 Ok(value.inner_bytes().clone())
             }
-            Err(e) => {
-                Err(EventError::IndexOutOfBounds)
-            },
+            Err(_) => Err(EventError::IndexOutOfBounds),
         }
+    }
+}
+
+impl Default for CasperTestEnv {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 fn parse_error(err: engine_state::Error) -> OdraError {
     if let engine_state::Error::Exec(exec_err) = err {
         match exec_err {
-            ExecutionError::Revert(ApiError::User(id)) => OdraError::execution_err(id, ""),
-            ExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
-            ExecutionError::NoSuchMethod(name) => OdraError::VmError(VmError::NoSuchMethod(name)),
-            _ => OdraError::VmError(VmError::Other(format!("Casper ExecError: {}", exec_err.to_string()))),
+            CasperExecutionError::Revert(ApiError::User(id)) => {
+                OdraError::ExecutionError(ExecutionError::new(id, ""))
+            }
+            CasperExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
+            CasperExecutionError::NoSuchMethod(name) => {
+                OdraError::VmError(VmError::NoSuchMethod(name))
+            }
+            _ => OdraError::VmError(VmError::Other(format!("Casper ExecError: {}", exec_err))),
         }
     } else {
-        OdraError::VmError(VmError::Other(format!("Casper EngineStateError: {}", err.to_string())))
+        OdraError::VmError(VmError::Other(format!("Casper EngineStateError: {}", err)))
     }
 }
