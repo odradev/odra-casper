@@ -31,6 +31,8 @@ impl ToTokens for WasmConstructor<'_> {
             .flat_map(|(entrypoint_ident, casper_args, fn_args)| {
                 quote! {
                     stringify!(#entrypoint_ident) => {
+                        let casper_address = casper_backend::backend::CasperAddress::from(contract_package_hash);
+                        let odra_address = odra::types::Address::try_from(casper_address).unwrap_or_revert();
                         let contract_ref = #ref_ident::at(odra_address);
                         #casper_args
                         contract_ref.#entrypoint_ident( #fn_args );
@@ -42,7 +44,7 @@ impl ToTokens for WasmConstructor<'_> {
         tokens.extend(quote! {
             if casper_backend::backend::named_arg_exists("constructor") {
                 use casper_backend::backend::casper_contract::unwrap_or_revert::UnwrapOrRevert;
-                let constructor_access: odra::types::URef =
+                let constructor_access: casper_backend::backend::casper_types::URef =
                     casper_backend::backend::casper_contract::contract_api::storage::create_contract_user_group(
                         contract_package_hash,
                         "constructor",
@@ -52,9 +54,6 @@ impl ToTokens for WasmConstructor<'_> {
                     .unwrap_or_revert()
                     .pop()
                     .unwrap_or_revert();
-
-                let casper_address = casper_backend::backend::CasperAddress::from(contract_package_hash);
-                let odra_address = odra::types::Address::try_from(casper_address).unwrap_or_revert();
 
                 let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>(
                     "constructor"
@@ -113,15 +112,15 @@ mod tests {
             quote! {
                 if casper_backend::backend::named_arg_exists("constructor") {
                     use casper_backend::backend::casper_contract::unwrap_or_revert::UnwrapOrRevert;
-                    let constructor_access: odra::types::URef = casper_backend::backend::casper_contract::contract_api::storage::create_contract_user_group(
+                    let constructor_access: casper_backend::backend::casper_types::URef = casper_backend::backend::casper_contract::contract_api::storage::create_contract_user_group(
                         contract_package_hash , "constructor" , 1 , Default::default()
                     ).unwrap_or_revert().pop().unwrap_or_revert();
-                    let casper_address = casper_backend::backend::CasperAddress::from(contract_package_hash);
-                    let odra_address = odra::types::Address::try_from(casper_address).unwrap_or_revert();
                     let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>("constructor");
                     let constructor_name = constructor_name.as_str();
                     match constructor_name {
                         stringify!(construct_me) => {
+                            let casper_address = casper_backend::backend::CasperAddress::from(contract_package_hash);
+                            let odra_address = odra::types::Address::try_from(casper_address).unwrap_or_revert();
                             let contract_ref = my_contract::MyContract::at(odra_address);
                             let value = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg (stringify!(value));
                             contract_ref.construct_me(value);

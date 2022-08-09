@@ -2,6 +2,7 @@ pub use casper_contract::{
     self,
     contract_api::{runtime, storage},
 };
+pub use casper_types;
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;
 
@@ -47,10 +48,10 @@ fn __revert(reason: &ExecutionError) -> ! {
     casper_env::revert(reason.code());
 }
 
-#[no_mangle]
-fn __print(message: &str) {
-    casper_env::print(message);
-}
+// #[no_mangle]
+// fn __print(message: &str) {
+//     casper_env::print(message);
+// }
 
 #[no_mangle]
 pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs) -> Vec<u8> {
