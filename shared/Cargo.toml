@@ -11,5 +11,4 @@ categories = ["wasm", "smart contracts"]
 
 [dependencies]
 casper-types = "1.5.0"
-odra-types = { git = "https://github.com/odradev/odra.git", branch = "develop" }
-# odra-types = { path = "../../../odra/types" }
+odra-types = "0.0.1"
