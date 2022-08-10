@@ -15,7 +15,6 @@ mod entrypoints_def;
 mod ty;
 mod wasm_entrypoint;
 
-
 /// Given the ContractDef from Odra, generate Casper contract.
 pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
     let entrypoints = generate_entrypoints(&contract_def, fqn.clone());
