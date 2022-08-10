@@ -1,3 +1,5 @@
+//! Implementation of [CasperTestEnv].
+
 use std::{cell::RefCell, path::PathBuf};
 
 use casper_engine_test_support::{
@@ -19,12 +21,14 @@ use odra::types::{event::EventError, EventData, ExecutionError, OdraError, VmErr
 use odra_casper_shared::casper_address::CasperAddress;
 
 thread_local! {
+    /// Thread local instance of [CasperTestEnv].
     pub static ENV: RefCell<CasperTestEnv> = RefCell::new(CasperTestEnv::new());
 }
 
 const EVENTS: &str = "__events";
 const EVENTS_LENGTH: &str = "__events_length";
 
+/// Wrapper for InMemoryWasmTestBuilder.
 pub struct CasperTestEnv {
     accounts: Vec<CasperAddress>,
     active_account: CasperAddress,
@@ -35,6 +39,7 @@ pub struct CasperTestEnv {
 }
 
 impl CasperTestEnv {
+    /// Create a new instance with predefined accounts.
     pub fn new() -> Self {
         let mut genesis_config = DEFAULT_GENESIS_CONFIG.clone();
         let mut accounts: Vec<CasperAddress> = Vec::new();
@@ -75,6 +80,7 @@ impl CasperTestEnv {
         }
     }
 
+    /// Deploy WASM file with args.
     pub fn deploy_contract(&mut self, wasm_path: &str, args: RuntimeArgs) {
         let session_code = PathBuf::from(wasm_path);
         let deploy_item = DeployItemBuilder::new()
@@ -92,6 +98,7 @@ impl CasperTestEnv {
         self.active_account = self.get_account(0);
     }
 
+    /// Call contract.
     pub fn call_contract(
         &mut self,
         hash: ContractPackageHash,
@@ -135,6 +142,7 @@ impl CasperTestEnv {
         }
     }
 
+    /// Set caller.
     pub fn set_caller(&mut self, account: CasperAddress) {
         self.active_account = account;
     }
@@ -143,12 +151,9 @@ impl CasperTestEnv {
         *self.active_account.as_account_hash().unwrap()
     }
 
+    /// Get one of the predefined accounts.
     pub fn get_account(&self, n: usize) -> CasperAddress {
         *self.accounts.get(n).unwrap()
-    }
-
-    pub fn as_account(&mut self, account: CasperAddress) {
-        self.active_account = account;
     }
 
     fn next_hash(&mut self) -> [u8; 32] {
@@ -160,6 +165,7 @@ impl CasperTestEnv {
         hash
     }
 
+    /// Read a value from Account's named keys.
     pub fn get_account_value<T: FromBytes + CLTyped>(&self, hash: AccountHash, name: &str) -> T {
         self.context
             .query(None, Key::Account(hash), &[name.to_string()])
@@ -171,6 +177,7 @@ impl CasperTestEnv {
             .unwrap()
     }
 
+    /// Read a ContractPackageHash of a given name, from the active account.
     pub fn get_contract_package_hash(&self, name: &str) -> ContractPackageHash {
         let account = self
             .context
@@ -180,10 +187,12 @@ impl CasperTestEnv {
         ContractPackageHash::from(key.into_hash().unwrap())
     }
 
+    /// Returns possible error.
     pub fn get_error(&self) -> Option<OdraError> {
         self.error.clone()
     }
 
+    /// Returns an event from the given contract.
     pub fn get_event(&self, address: CasperAddress, index: i32) -> Result<EventData, EventError> {
         let address = address.as_contract_package_hash().unwrap();
 
