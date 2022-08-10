@@ -1,6 +1,6 @@
 [package]
 name = "odra-casper-backend"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 authors = ["Jakub Płaskonka <kuba@odra.dev>", "Krzysztof Pobiarżyn <krzysztof@odra.dev>", "Maciej Zieliński <maciej@odra.dev>"]
 license = "MIT"
@@ -19,5 +19,5 @@ hex = "0.4.3"
 convert_case = "0.5.0"
 pretty_assertions = "1.2.1"
 lazy_static = "1.4.0"
-odra-casper-shared = { version = "0.0.1", path = "../shared" }
-odra = { version = "0.0.1", default-features = false, features = [ "wasm" ] }
+odra-casper-shared = { version = "0.1.0", path = "../shared" }
+odra = { version = "0.1.0", default-features = false, features = [ "wasm" ] }

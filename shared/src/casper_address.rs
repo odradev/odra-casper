@@ -1,3 +1,5 @@
+//! Better address representation for Casper.
+
 use casper_types::{
     account::AccountHash,
     bytesrepr::{self, FromBytes, ToBytes},

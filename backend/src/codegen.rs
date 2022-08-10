@@ -1,3 +1,5 @@
+//! Set of functions to generate Casper contract.
+
 use self::{
     constructor::WasmConstructor, entrypoints_def::ContractEntrypoints,
     wasm_entrypoint::WasmEntrypoint,
@@ -13,7 +15,7 @@ mod entrypoints_def;
 mod ty;
 mod wasm_entrypoint;
 
-// TODO: Put those functions into trait inside odra, so each backend will implement them
+/// Given the ContractDef from Odra, generate Casper contract.
 pub fn gen_contract(contract_def: ContractDef, fqn: String) -> TokenStream2 {
     let entrypoints = generate_entrypoints(&contract_def, fqn.clone());
     let call_fn = generate_call(&contract_def, fqn + "Ref");

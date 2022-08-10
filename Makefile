@@ -32,3 +32,12 @@ clean:
 	cd shared && cargo clean
 	cd test_env && cargo clean
 	cd test_env/getter_proxy && cargo clean
+
+docs-backend:
+	cd backend && cargo doc --lib --no-deps --open
+
+docs-shared:
+	cd shared && cargo doc --lib --no-deps --open
+
+docs-test-env:
+	cd test_env && cargo doc --lib --no-deps --open
