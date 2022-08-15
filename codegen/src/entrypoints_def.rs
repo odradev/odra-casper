@@ -20,7 +20,7 @@ impl ContractEntrypoints<'_> {
         let ret = WrappedType(&entrypoint.ret);
         let access = match &entrypoint.ty {
             EntrypointType::Constructor => quote! {
-                casper_backend::backend::casper_types::EntryPointAccess::Groups(vec![casper_backend::backend::casper_types::Group::new("constructor")])
+                casper_backend::backend::casper_types::EntryPointAccess::Groups(alloc::vec![casper_backend::backend::casper_types::Group::new("constructor")])
             },
             EntrypointType::Public => {
                 quote! { casper_backend::backend::casper_types::EntryPointAccess::Public }
@@ -45,7 +45,7 @@ struct EntrypointParams<'a>(pub &'a Vec<Argument>);
 impl ToTokens for EntrypointParams<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.0.is_empty() {
-            tokens.extend(quote!(Vec::<
+            tokens.extend(quote!(alloc::vec::Vec::<
                 casper_backend::backend::casper_types::Parameter,
             >::new()));
         } else {
@@ -61,7 +61,7 @@ impl ToTokens for EntrypointParams<'_> {
 
             let params = quote! {
                 {
-                    let mut params: Vec<casper_backend::backend::casper_types::Parameter> = Vec::new();
+                    let mut params: alloc::vec::Vec<casper_backend::backend::casper_types::Parameter> = alloc::vec::Vec::new();
                     #params_content
                     params
                 }
@@ -75,7 +75,7 @@ impl ToTokens for EntrypointParams<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::codegen::assert_eq_tokens;
+    use crate::assert_eq_tokens;
     use odra::types::CLType;
 
     #[test]

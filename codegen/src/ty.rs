@@ -87,8 +87,8 @@ impl ToTokens for WrappedType<'_> {
 
 #[cfg(test)]
 mod tests {
+    use crate::assert_eq_tokens;
     use super::*;
-    use crate::codegen::assert_eq_tokens;
 
     #[test]
     fn test_simple_type() {

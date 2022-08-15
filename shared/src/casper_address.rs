@@ -1,5 +1,6 @@
 //! Better address representation for Casper.
 
+use alloc::{string::String, vec::Vec};
 use casper_types::{
     account::AccountHash,
     bytesrepr::{self, FromBytes, ToBytes},

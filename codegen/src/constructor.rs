@@ -55,7 +55,7 @@ impl ToTokens for WasmConstructor<'_> {
                     .pop()
                     .unwrap_or_revert();
 
-                let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>(
+                let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<alloc::string::String>(
                     "constructor"
                 );
                 let constructor_name = constructor_name.as_str();
@@ -66,7 +66,7 @@ impl ToTokens for WasmConstructor<'_> {
                 };
 
                 // Revoke access to constructor.
-                let mut urefs = std::collections::BTreeSet::new();
+                let mut urefs = alloc::collections::BTreeSet::new();
                 urefs.insert(constructor_access);
                 casper_backend::backend::casper_contract::contract_api::storage::remove_contract_user_group_urefs(
                     contract_package_hash,
@@ -83,7 +83,7 @@ mod tests {
     use odra::contract_def::{Argument, EntrypointType};
     use odra::types::CLType;
 
-    use crate::codegen::assert_eq_tokens;
+    use crate::assert_eq_tokens;
 
     use super::*;
 
@@ -115,7 +115,7 @@ mod tests {
                     let constructor_access: casper_backend::backend::casper_types::URef = casper_backend::backend::casper_contract::contract_api::storage::create_contract_user_group(
                         contract_package_hash , "constructor" , 1 , Default::default()
                     ).unwrap_or_revert().pop().unwrap_or_revert();
-                    let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<String>("constructor");
+                    let constructor_name = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg::<alloc::string::String>("constructor");
                     let constructor_name = constructor_name.as_str();
                     match constructor_name {
                         stringify!(construct_me) => {
@@ -127,7 +127,7 @@ mod tests {
                         },
                         _ => {}
                     };
-                    let mut urefs = std::collections::BTreeSet::new();
+                    let mut urefs = alloc::collections::BTreeSet::new();
                     urefs.insert(constructor_access);
                     casper_backend::backend::casper_contract::contract_api::storage::remove_contract_user_group_urefs(
                         contract_package_hash , "constructor" , urefs

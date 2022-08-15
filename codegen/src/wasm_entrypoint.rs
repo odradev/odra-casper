@@ -45,7 +45,7 @@ impl ToTokens for WasmEntrypoint<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::codegen::assert_eq_tokens;
+    use crate::assert_eq_tokens;
     use odra::contract_def::{Argument, EntrypointType};
     use odra::types::CLType;
 

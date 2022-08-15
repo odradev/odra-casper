@@ -1,5 +1,6 @@
+use alloc::{collections::BTreeMap, string::{String, ToString}, vec::Vec};
 use lazy_static::lazy_static;
-use std::{collections::BTreeMap, sync::Mutex};
+use spin::Mutex;
 
 use casper_contract::{
     contract_api::{
@@ -161,7 +162,7 @@ pub fn call_contract(
     let (runtime_args_ptr, runtime_args_size, _bytes) = to_ptr(runtime_args);
 
     let bytes_written = {
-        let mut bytes_written = std::mem::MaybeUninit::uninit();
+        let mut bytes_written = core::mem::MaybeUninit::uninit();
         let ret = unsafe {
             casper_contract::ext_ffi::casper_call_versioned_contract(
                 contract_package_hash_ptr,
@@ -181,7 +182,7 @@ pub fn call_contract(
 
     if bytes_written == 0 {
         // If no bytes were written, the host buffer hasn't been set and hence shouldn't be read.
-        vec![]
+        alloc::vec![]
     } else {
         // NOTE: this is a copy of the contents of `read_host_buffer()`.  Calling that directly from
         // here causes several contracts to fail with a Wasmi `Unreachable` error.
@@ -215,7 +216,7 @@ fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
 }
 
 fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
-    let mut bytes_written = std::mem::MaybeUninit::uninit();
+    let mut bytes_written = core::mem::MaybeUninit::uninit();
     let ret = unsafe {
         casper_contract::ext_ffi::casper_read_host_buffer(
             dest.as_mut_ptr(),
@@ -231,7 +232,7 @@ fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
 }
 
 fn get_seed(name: &str) -> URef {
-    let mut seeds = SEEDS.lock().unwrap();
+    let mut seeds = SEEDS.lock();
     let maybe_seed = seeds.get(name);
     match maybe_seed {
         Some(seed) => *seed,

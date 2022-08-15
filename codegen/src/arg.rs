@@ -21,7 +21,7 @@ impl ToTokens for CasperArgs<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codegen::assert_eq_tokens;
+    use crate::assert_eq_tokens;
     use odra::types::CLType;
 
     #[test]

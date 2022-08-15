@@ -1,7 +1,8 @@
 //! Casper backend for WASM.
 //!
 //! It provieds all the required functions to communicate between Odra and Casper.
-
+use alloc::vec::Vec;
+use casper_contract::unwrap_or_revert::UnwrapOrRevert;
 pub use casper_contract::{
     self,
     contract_api::{runtime, storage},
@@ -21,13 +22,13 @@ fn __get_blocktime() -> u64 {
 /// Returns contract caller.
 #[no_mangle]
 pub fn __caller() -> OdraAddress {
-    OdraAddress::try_from(casper_env::caller()).unwrap()
+    OdraAddress::try_from(casper_env::caller()).unwrap_or_revert()
 }
 
 /// Returns current contract address.
 #[no_mangle]
 pub fn __self_address() -> OdraAddress {
-    OdraAddress::try_from(casper_env::self_address()).unwrap()
+    OdraAddress::try_from(casper_env::self_address()).unwrap_or_revert()
 }
 
 /// Store a value into the storage.
@@ -68,7 +69,7 @@ pub fn __revert(reason: &ExecutionError) -> ! {
 /// Call another contract.
 #[no_mangle]
 pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs) -> Vec<u8> {
-    let casper_address = CasperAddress::try_from(*address).unwrap();
+    let casper_address = CasperAddress::try_from(*address).unwrap_or_revert();
     casper_env::call_contract(casper_address, entrypoint, args.clone())
 }
 
