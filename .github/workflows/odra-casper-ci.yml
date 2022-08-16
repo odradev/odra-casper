@@ -26,7 +26,6 @@ jobs:
           profile: minimal
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v1
-      - run: apt update
       - run: make prepare
       - run: make build-test-env
       - run: make check-lint
