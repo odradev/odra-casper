@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, string::{String, ToString}, vec::Vec};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use lazy_static::lazy_static;
 use spin::Mutex;
 
@@ -135,8 +135,11 @@ pub fn emit_event(event: &EventData) {
             (value, key)
         }
     };
+    let item_key = unsafe {
+        alloc::string::String::from_utf8_unchecked(events_length.to_ne_bytes().to_vec())
+    };
     let events_seed: URef = get_seed(EVENTS);
-    dictionary_put(events_seed, &events_length.to_string(), event.clone());
+    dictionary_put(events_seed, &item_key, event.clone());
     storage::write(key, events_length + 1);
 }
 
