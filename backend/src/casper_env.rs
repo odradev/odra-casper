@@ -135,9 +135,8 @@ pub fn emit_event(event: &EventData) {
             (value, key)
         }
     };
-    let item_key = unsafe {
-        alloc::string::String::from_utf8_unchecked(events_length.to_ne_bytes().to_vec())
-    };
+    let item_key =
+        unsafe { alloc::string::String::from_utf8_unchecked(events_length.to_ne_bytes().to_vec()) };
     let events_seed: URef = get_seed(EVENTS);
     dictionary_put(events_seed, &item_key, event.clone());
     storage::write(key, events_length + 1);
