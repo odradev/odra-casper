@@ -1,11 +1,11 @@
 [package]
 name = "odra-casper-backend"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Jakub Płaskonka <kuba@odra.dev>", "Krzysztof Pobiarżyn <krzysztof@odra.dev>", "Maciej Zieliński <maciej@odra.dev>"]
 license = "MIT"
 repository = "https://github.com/odradev/odra-casper"
-description = "Odra backend bindings and codegen utility for the Casper Blockchain."
+description = "Odra backend bindings for the Casper Blockchain."
 keywords = ["wasm", "webassembly", "blockchain"]
 categories = ["wasm", "smart contracts"]
 
@@ -15,7 +15,9 @@ casper-types = "1.5.0"
 hex = { version = "0.4.3", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false, features = [ "spin_no_std" ] }
 spin = "0.9.4"
-# odra-casper-shared = { version = "0.1.0", path = "../shared" }
-# odra = { version = "0.1.0", default-features = false, features = [ "wasm" ] }
-odra-casper-shared = { path = "../shared" }
-odra = { path = "../../odra/core", default-features = false, features = [ "wasm" ] }
+odra-casper-shared = { version = "0.2.0", path = "../shared" }
+odra = { version = "0.2.0", path = "../../odra/core", default-features = false, features = [ "wasm" ] }
+
+[patch.crates-io]
+odra = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
+odra-casper-shared = { git = "https://github.com/odradev/odra-casper", branch = "feature/no_std" }

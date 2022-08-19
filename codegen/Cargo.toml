@@ -1,9 +1,13 @@
 [package]
 name = "odra-casper-codegen"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Jakub Płaskonka <kuba@odra.dev>", "Krzysztof Pobiarżyn <krzysztof@odra.dev>", "Maciej Zieliński <maciej@odra.dev>"]
+license = "MIT"
+repository = "https://github.com/odradev/odra-casper"
+description = "Odra codegen utility for the Casper Blockchain."
+keywords = ["wasm", "webassembly", "blockchain"]
+categories = ["wasm", "smart contracts"]
 
 [dependencies]
 proc-macro2 = "1.0.39"
@@ -11,4 +15,7 @@ quote = "1.0.18"
 syn = "1.0.96"
 convert_case = "0.5.0"
 pretty_assertions = "1.2.1"
-odra = { path = "../../odra/core" }
+odra = { version = "0.2.0", path = "../../odra/core", default-features = false, features = [ "std" ] }
+
+[patch.crates-io]
+odra = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
