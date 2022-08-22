@@ -15,7 +15,7 @@ quote = "1.0.18"
 syn = "1.0.96"
 convert_case = "0.5.0"
 pretty_assertions = "1.2.1"
-odra = { version = "0.2.0", path = "../../odra/core", default-features = false, features = [ "std" ] }
+odra = { version = "0.2.0", path = "../../odra/core", default-features = false, features = [ "wasm-test", "std" ] }
 
 [patch.crates-io]
 odra = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
