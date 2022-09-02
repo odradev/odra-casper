@@ -18,6 +18,7 @@ odra = { version = "0.2.0", default-features = false, features = [ "wasm-test" ]
 
 [patch.crates-io]
 odra = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
+odra-types = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
 odra-casper-shared = { git = "https://github.com/odradev/odra-casper", branch = "feature/no_std" }
 
 [lib]
