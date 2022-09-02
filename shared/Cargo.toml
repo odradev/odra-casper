@@ -11,7 +11,7 @@ categories = ["wasm", "smart contracts"]
 
 [dependencies]
 casper-types = "1.5.0"
-odra-types = { version = "0.2.0", path = "../../odra/types" }
+odra-types = { version = "0.2.0" }
 
 [patch.crates-io]
 odra-types = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
