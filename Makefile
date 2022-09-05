@@ -11,7 +11,7 @@ build-test-env:
 	cd test_env && cargo build --release
 
 clippy:
-	cd backend && cargo clippy --all-targets -- -D warnings
+	cd backend && cargo clippy --target wasm32-unknown-unknown -- -D warnings
 	cd codegen && cargo clippy --all-targets -- -D warnings
 	cd shared && cargo clippy --all-targets -- -D warnings
 	cd test_env && cargo clippy --all-targets -- -D warnings

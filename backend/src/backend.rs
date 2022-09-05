@@ -1,6 +1,6 @@
 //! Casper backend for WASM.
 //!
-//! It provieds all the required functions to communicate between Odra and Casper.
+//! It provides all the required functions to communicate between Odra and Casper.
 use alloc::vec::Vec;
 use casper_contract::unwrap_or_revert::UnwrapOrRevert;
 pub use casper_contract::{
