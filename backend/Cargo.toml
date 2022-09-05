@@ -10,7 +10,7 @@ keywords = ["wasm", "webassembly", "blockchain"]
 categories = ["wasm", "smart contracts"]
 
 [dependencies]
-casper-contract = "1.4.4"
+casper-contract = { version = "1.4.4", default-features = false }
 casper-types = "1.5.0"
 hex = { version = "0.4.3", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false, features = [ "spin_no_std" ] }
@@ -22,3 +22,7 @@ odra = { version = "0.2.0", default-features = false, features = [ "wasm" ] }
 odra = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
 odra-types = { git = "https://github.com/odradev/odra", branch = "feature/no_std" }
 odra-casper-shared = { git = "https://github.com/odradev/odra-casper", branch = "feature/no_std" }
+
+[features]
+default = [ "casper-contract/default" ]
+test-support = []
