@@ -98,7 +98,7 @@ mod test {
                     casper_backend::backend::casper_types::EntryPoint::new(
                         stringify!(call_me),
                         {
-                            let mut params: Vec<casper_backend::backend::casper_types::Parameter> = Vec::new();
+                            let mut params: alloc::vec::Vec<casper_backend::backend::casper_types::Parameter> = alloc::vec::Vec::new();
                             params.push(casper_backend::backend::casper_types::Parameter::new(stringify!(value), casper_backend::backend::casper_types::CLType::I32));
                             params
                         },
