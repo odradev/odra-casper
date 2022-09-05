@@ -4,7 +4,7 @@ prepare:
 
 test:
 	cd shared && cargo test
-	cd backend && cargo test
+	cd backend && cargo test --no-default-features
 	cd codegen && cargo test
 
 build-test-env:
