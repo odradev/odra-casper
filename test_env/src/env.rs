@@ -257,10 +257,16 @@ impl Default for CasperTestEnv {
 fn parse_error(err: engine_state::Error) -> OdraError {
     if let engine_state::Error::Exec(exec_err) = err {
         match exec_err {
+            CasperExecutionError::Revert(ApiError::MissingArgument) => {
+                OdraError::VmError(VmError::MissingArg)
+            }
             CasperExecutionError::Revert(ApiError::User(id)) => {
                 OdraError::ExecutionError(ExecutionError::new(id, ""))
             }
             CasperExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
+            CasperExecutionError::MissingArgument { name: _ } => {
+                OdraError::VmError(VmError::MissingArg)
+            }
             CasperExecutionError::NoSuchMethod(name) => {
                 OdraError::VmError(VmError::NoSuchMethod(name))
             }
