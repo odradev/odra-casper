@@ -246,6 +246,11 @@ impl CasperTestEnv {
             Err(_) => Err(EventError::IndexOutOfBounds),
         }
     }
+
+    /// Increases the current value of block_time.
+    pub fn advance_block_time_by(&mut self, seconds: u64) {
+        self.block_time += seconds;
+    }
 }
 
 impl Default for CasperTestEnv {

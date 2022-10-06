@@ -78,3 +78,9 @@ pub fn get_event(address: &OdraAddress, index: i32) -> Result<EventData, EventEr
         env.borrow().get_event(casper_address, index)
     })
 }
+
+/// Increases the current value of block_time.
+#[no_mangle]
+fn advance_block_time_by(seconds: u64) {
+    ENV.with(|env| env.borrow_mut().advance_block_time_by(seconds))
+}

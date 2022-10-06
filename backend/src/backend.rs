@@ -14,7 +14,7 @@ use crate::casper_env;
 
 /// Returns blocktime.
 #[no_mangle]
-fn __get_blocktime() -> u64 {
+fn __get_block_time() -> u64 {
     casper_env::get_block_time()
 }
 
