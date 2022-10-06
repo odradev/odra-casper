@@ -4,7 +4,7 @@ use std::{collections::BTreeMap, sync::Mutex};
 use casper_contract::{
     contract_api::{
         self, runtime,
-        storage::{self, dictionary_put},
+        storage::{self, dictionary_put}, system::{create_purse, get_purse_balance},
     },
     unwrap_or_revert::UnwrapOrRevert,
 };
@@ -12,7 +12,7 @@ use casper_types::{
     api_error,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     system::CallStackElement,
-    ApiError, CLTyped, CLValue, ContractVersion, Key, RuntimeArgs, URef,
+    ApiError, CLTyped, CLValue, ContractVersion, Key, RuntimeArgs, URef, U512,
 };
 
 use odra::types::EventData;
@@ -24,6 +24,7 @@ lazy_static! {
 
 const EVENTS: &str = "__events";
 const EVENTS_LENGTH: &str = "__events_length";
+const MAIN_PURSE: &str = "__main_purse";
 
 /// Save value to the storage.
 pub fn set_cl_value(name: &str, value: CLValue) {
@@ -248,4 +249,22 @@ fn get_seed(name: &str) -> URef {
             seed
         }
     }
+}
+
+pub(crate) fn get_or_create_purse() -> URef {
+    match runtime::get_key(MAIN_PURSE) {
+        Some(purse_key) => {
+            *purse_key.as_uref().unwrap_or_revert()
+        },
+        None => {
+            let purse = create_purse();
+            runtime::put_key(MAIN_PURSE, purse.into());
+            purse
+        },
+    }
+}
+
+pub(crate) fn self_balance() -> U512 {
+    let purse = get_or_create_purse();
+    get_purse_balance(purse).unwrap_or_default()
 }

@@ -15,7 +15,8 @@ casper-execution-engine = { version = "2.0.0" }
 casper-types = "1.5.0"
 
 odra-casper-shared = { version = "0.1.0", path = "../shared" }
-odra = { version = "0.1.0", default-features = false, features = [ "wasm-test" ] }
+# odra = { version = "0.1.0", default-features = false, features = [ "wasm-test" ] }
+odra = { path = "../../odra/core", default-features = false, features = [ "wasm-test" ] }
 
 [lib]
 crate-type = ["cdylib"]

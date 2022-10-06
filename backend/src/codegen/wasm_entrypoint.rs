@@ -17,6 +17,17 @@ impl ToTokens for WasmEntrypoint<'_> {
             .iter()
             .for_each(|arg| fn_args.push(format_ident!("{}", arg.ident)));
 
+        let payable = match self.0.ty {
+            odra::contract_def::EntrypointType::PublicPayable => quote! {
+                let cargo_purse = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg("purse");
+                let contract_purse = casper_backend::backend::::get_main_purse();
+                    
+                let amount = casper_backend::backend::casper_contract::contract_api::system::get_purse_balance(cargo_purse).unwrap_or_default();
+                casper_backend::backend::casper_contract::contract_api::system::transfer_from_purse_to_purse(cargo_purse, contract_purse, amount, None);
+                casper_backend::backend::set_attached_value(amount);
+            },
+            _ => quote!()
+        };
         let contract_call = match self.0.ret {
             odra::types::CLType::Unit => quote! {
                 #args
@@ -36,6 +47,7 @@ impl ToTokens for WasmEntrypoint<'_> {
         tokens.extend(quote! {
             #[no_mangle]
             fn #entrypoint_ident() {
+                #payable
                 let contract = #contract_path::instance("contract");
                 #contract_call
             }

@@ -7,10 +7,13 @@ pub use casper_contract::{
     contract_api::{runtime, storage},
 };
 pub use casper_types;
+use casper_types::{U512, URef};
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;
 
 use crate::casper_env;
+
+static mut ATTACHED_VALUE: U512 = U512::zero();
 
 /// Returns blocktime.
 #[no_mangle]
@@ -78,6 +81,31 @@ pub fn __emit_event(event: &EventData) {
     casper_env::emit_event(event);
 }
 
+#[no_mangle]
+pub fn __one_token() -> U512 {
+    U512::one()
+}
+
+#[no_mangle]
+pub fn __self_balance() -> U512 {
+    casper_env::self_balance()
+}
+
+#[no_mangle]
+fn __attached_value() -> U512 {
+    unsafe { ATTACHED_VALUE }
+}
+
+#[no_mangle]
+fn __with_tokens(amount: U512) {
+    unimplemented!()
+}
+
+#[no_mangle]
+fn __transfer_tokens(to: OdraAddress, amount: U512) {
+    unimplemented!()
+}
+
 /// Check if given named argument exists.
 pub fn named_arg_exists(name: &str) -> bool {
     let mut arg_size: usize = 0;
@@ -89,4 +117,12 @@ pub fn named_arg_exists(name: &str) -> bool {
         )
     };
     casper_types::api_error::result_from(ret).is_ok()
+}
+
+pub fn get_main_purse() -> URef {
+    casper_env::get_or_create_purse()
+}
+
+pub fn set_attached_value(amount: U512) {
+    unsafe { ATTACHED_VALUE = amount; }
 }

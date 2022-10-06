@@ -7,12 +7,15 @@ use core::convert::TryInto;
 use core::mem::MaybeUninit;
 
 use alloc::{string::String, vec::Vec};
+use casper_contract::contract_api::account::get_main_purse;
 use casper_contract::contract_api::storage;
+use casper_contract::contract_api::system::transfer_from_purse_to_purse;
 use casper_contract::{
-    contract_api::{self, runtime},
+    contract_api::{self, runtime, system::create_purse},
     ext_ffi,
     unwrap_or_revert::UnwrapOrRevert,
 };
+use casper_types::U512;
 use casper_types::{
     api_error,
     bytesrepr::{Bytes, FromBytes, ToBytes},
@@ -25,8 +28,17 @@ fn call() {
         runtime::get_named_arg("contract_package_hash");
     let entry_point: String = runtime::get_named_arg("entry_point");
     let args_bytes: Bytes = runtime::get_named_arg("args");
-    let (args, _) = RuntimeArgs::from_bytes(&args_bytes).unwrap_or_revert();
+    let (mut args, _) = RuntimeArgs::from_bytes(&args_bytes).unwrap_or_revert();
     let has_return: bool = runtime::get_named_arg("has_return");
+    let attached_value: Option<U512> = runtime::get_named_arg("attached_value");
+
+    if let Some(amount) = attached_value {
+        let purse = create_purse();
+        let main_purse = get_main_purse();
+        let _ = transfer_from_purse_to_purse(main_purse, purse, amount, None);
+
+        args.insert("purse", purse).unwrap_or_revert();
+    }
     if has_return {
         let result: Vec<u8> =
             call_versioned_contract(contract_package_hash, None, &entry_point, args);

@@ -25,6 +25,9 @@ impl ContractEntrypoints<'_> {
             EntrypointType::Public => {
                 quote! { casper_backend::backend::casper_types::EntryPointAccess::Public }
             }
+            EntrypointType::PublicPayable => {
+                quote! { casper_backend::backend::casper_types::EntryPointAccess::Public }
+            },
         };
         quote! {
             entry_points.add_entry_point(

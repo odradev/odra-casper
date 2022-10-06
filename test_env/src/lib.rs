@@ -2,7 +2,7 @@
 
 use crate::env::ENV;
 use casper_types::{bytesrepr::Bytes, RuntimeArgs};
-use odra::types::{event::EventError, Address as OdraAddress, EventData, OdraError};
+use odra::types::{event::EventError, Address as OdraAddress, EventData, OdraError, U512};
 use odra_casper_shared::casper_address::CasperAddress;
 
 pub mod env;
@@ -35,6 +35,7 @@ pub fn call_contract(
     addr: &OdraAddress,
     entrypoint: &str,
     args: &RuntimeArgs,
+    is_payable: bool,
     has_return: bool,
 ) -> Option<Bytes> {
     ENV.with(|env| {
@@ -83,4 +84,11 @@ pub fn get_event(address: &OdraAddress, index: i32) -> Result<EventData, EventEr
 #[no_mangle]
 fn advance_block_time_by(seconds: u64) {
     ENV.with(|env| env.borrow_mut().advance_block_time_by(seconds))
+}
+
+#[no_mangle]
+pub fn with_tokens(amount: U512) {
+    ENV.with(|env| {
+        env.borrow_mut().with_tokens(amount);
+    });
 }

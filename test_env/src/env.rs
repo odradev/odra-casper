@@ -36,6 +36,7 @@ pub struct CasperTestEnv {
     block_time: u64,
     calls_counter: u32,
     error: Option<OdraError>,
+    attached_value: Option<U512>,
 }
 
 impl CasperTestEnv {
@@ -77,6 +78,7 @@ impl CasperTestEnv {
             block_time: 0,
             calls_counter: 0,
             error: None,
+            attached_value: None,
         }
     }
 
@@ -114,7 +116,9 @@ impl CasperTestEnv {
             "contract_package_hash" => hash,
             "entry_point" => entry_point,
             "args" => Bytes::from(args_bytes),
-            "has_return" => has_return
+            "has_return" => has_return,
+            "attached_value" => self.attached_value,
+            "amount" => self.attached_value.unwrap_or_default(),
         };
 
         let deploy_item = DeployItemBuilder::new()
@@ -250,6 +254,10 @@ impl CasperTestEnv {
     /// Increases the current value of block_time.
     pub fn advance_block_time_by(&mut self, seconds: u64) {
         self.block_time += seconds;
+    }
+    
+    pub fn with_tokens(&mut self, amount: U512) {
+        self.attached_value = Some(amount);
     }
 }
 
