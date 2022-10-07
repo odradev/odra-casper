@@ -1,6 +1,6 @@
 //! Casper backend for WASM.
 //!
-//! It provieds all the required functions to communicate between Odra and Casper.
+//! It provides all the required functions to communicate between Odra and Casper.
 
 pub use casper_contract::{
     self,
@@ -17,7 +17,7 @@ static mut ATTACHED_VALUE: U512 = U512::zero();
 
 /// Returns blocktime.
 #[no_mangle]
-fn __get_block_time() -> u64 {
+pub  fn __get_block_time() -> u64 {
     casper_env::get_block_time()
 }
 
@@ -81,32 +81,39 @@ pub fn __emit_event(event: &EventData) {
     casper_env::emit_event(event);
 }
 
+/// Returns the value that represents one CSPR.
+/// 
+/// 1 CSPR = 1,000,000,000 Motes.
 #[no_mangle]
 pub fn __one_token() -> U512 {
-    U512::one()
+    U512::from(1_000_000_000)
 }
 
+/// Returns the balance of the account associated with the currently executing contract.
 #[no_mangle]
 pub fn __self_balance() -> U512 {
     casper_env::self_balance()
 }
 
+/// Returns amount of native token attached to the call.
 #[no_mangle]
-fn __attached_value() -> U512 {
+pub fn __attached_value() -> U512 {
     unsafe { ATTACHED_VALUE }
 }
 
+/// Attaches [amount] of native token to the next contract call.
 #[no_mangle]
-fn __with_tokens(amount: U512) {
+pub fn __with_tokens(amount: U512) {
     unimplemented!()
 }
 
+/// Transfers native token from the contract caller to the given address.
 #[no_mangle]
-fn __transfer_tokens(to: OdraAddress, amount: U512) {
+pub fn __transfer_tokens(to: OdraAddress, amount: U512) {
     unimplemented!()
 }
 
-/// Check if given named argument exists.
+/// Checks if given named argument exists.
 pub fn named_arg_exists(name: &str) -> bool {
     let mut arg_size: usize = 0;
     let ret = unsafe {
@@ -119,10 +126,17 @@ pub fn named_arg_exists(name: &str) -> bool {
     casper_types::api_error::result_from(ret).is_ok()
 }
 
+/// Gets the currently executing contract main purse [URef].
 pub fn get_main_purse() -> URef {
     casper_env::get_or_create_purse()
 }
 
+/// Stores in memory the amount attached to the current call.
 pub fn set_attached_value(amount: U512) {
     unsafe { ATTACHED_VALUE = amount; }
+}
+
+/// Zeroes the amount attached to the current call.
+pub fn clear_attached_value() {
+    unsafe { ATTACHED_VALUE = U512::zero() }
 }

@@ -35,7 +35,6 @@ pub fn call_contract(
     addr: &OdraAddress,
     entrypoint: &str,
     args: &RuntimeArgs,
-    is_payable: bool,
     has_return: bool,
 ) -> Option<Bytes> {
     ENV.with(|env| {
@@ -91,4 +90,14 @@ pub fn with_tokens(amount: U512) {
     ENV.with(|env| {
         env.borrow_mut().with_tokens(amount);
     });
+}
+
+#[no_mangle]
+pub fn token_balance(address: OdraAddress) -> U512 {
+    U512::one()
+}
+
+#[no_mangle]
+pub fn one_token() -> U512 {
+    U512::one()
 }

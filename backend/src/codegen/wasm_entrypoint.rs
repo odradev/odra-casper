@@ -20,14 +20,23 @@ impl ToTokens for WasmEntrypoint<'_> {
         let payable = match self.0.ty {
             odra::contract_def::EntrypointType::PublicPayable => quote! {
                 let cargo_purse = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg("purse");
-                let contract_purse = casper_backend::backend::::get_main_purse();
-                    
                 let amount = casper_backend::backend::casper_contract::contract_api::system::get_purse_balance(cargo_purse).unwrap_or_default();
-                casper_backend::backend::casper_contract::contract_api::system::transfer_from_purse_to_purse(cargo_purse, contract_purse, amount, None);
-                casper_backend::backend::set_attached_value(amount);
+                if amount > odra::types::U512::zero() {
+                    let contract_purse = casper_backend::backend::get_main_purse();
+                    casper_backend::backend::casper_contract::contract_api::system::transfer_from_purse_to_purse(cargo_purse, contract_purse, amount, None);
+                    casper_backend::backend::set_attached_value(amount);
+                }
             },
             _ => quote!()
         };
+
+        let payable_cleanup = match self.0.ty {
+            odra::contract_def::EntrypointType::PublicPayable => quote! {
+                casper_backend::backend::clear_attached_value();
+            },
+            _ => quote!()
+        };
+
         let contract_call = match self.0.ret {
             odra::types::CLType::Unit => quote! {
                 #args
@@ -50,6 +59,7 @@ impl ToTokens for WasmEntrypoint<'_> {
                 #payable
                 let contract = #contract_path::instance("contract");
                 #contract_call
+                #payable_cleanup
             }
         });
     }
@@ -91,6 +101,37 @@ mod tests {
                     let contract = my_contract::MyContract::instance("contract");
                     let value = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg(stringify!(value));
                     contract.construct_me(value);
+                }
+            ),
+        );
+    }
+
+    #[test]
+    fn test_payable() {
+        let entrypoint = Entrypoint {
+            ident: String::from("pay_me"),
+            args: vec![],
+            ret: CLType::Unit,
+            ty: EntrypointType::PublicPayable,
+        };
+        let path: Path = syn::parse_quote!(a::b::c::Contract);
+
+        let wasm_entrypoint = WasmEntrypoint(&entrypoint, &path);
+        assert_eq_tokens(
+            wasm_entrypoint,
+            quote!(
+                #[no_mangle]
+                fn pay_me() {
+                    let cargo_purse = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg("purse");
+                    let amount = casper_backend::backend::casper_contract::contract_api::system::get_purse_balance(cargo_purse).unwrap_or_default();
+                    if amount > odra::types::U512::zero() {
+                        let contract_purse = casper_backend::backend::get_main_purse();
+                        casper_backend::backend::casper_contract::contract_api::system::transfer_from_purse_to_purse(cargo_purse, contract_purse, amount, None);
+                        casper_backend::backend::set_attached_value(amount);
+                    }
+                    let contract = a::b::c::Contract::instance("contract");
+                    contract.pay_me();
+                    casper_backend::backend::clear_attached_value();
                 }
             ),
         );

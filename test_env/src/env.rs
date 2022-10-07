@@ -135,6 +135,7 @@ impl CasperTestEnv {
         self.context.exec(execute_request).commit();
 
         let active_account = self.active_account_hash();
+        self.attached_value = None;
 
         if self.context.is_error() {
             self.error = Some(parse_error(self.context.get_error().unwrap()));
@@ -255,7 +256,7 @@ impl CasperTestEnv {
     pub fn advance_block_time_by(&mut self, seconds: u64) {
         self.block_time += seconds;
     }
-    
+
     pub fn with_tokens(&mut self, amount: U512) {
         self.attached_value = Some(amount);
     }
