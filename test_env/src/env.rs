@@ -12,7 +12,7 @@ use casper_execution_engine::core::engine_state::{
 };
 pub use casper_execution_engine::core::execution::Error as CasperExecutionError;
 use casper_types::{
-    account::AccountHash,
+    account::{AccountHash, Account},
     bytesrepr::{Bytes, FromBytes, ToBytes},
     runtime_args, ApiError, CLTyped, ContractHash, ContractPackageHash, Key, Motes, PublicKey,
     RuntimeArgs, SecretKey, URef, U512,
@@ -259,6 +259,15 @@ impl CasperTestEnv {
 
     pub fn with_tokens(&mut self, amount: U512) {
         self.attached_value = Some(amount);
+    }
+
+    pub fn get_account_cspr_balance(&self, account: CasperAddress) -> U512 {
+        let account: Account = self
+            .context
+            .get_account(*account.as_account_hash().unwrap())
+            .unwrap();
+        let purse = account.main_purse();
+        self.context.get_purse_balance(purse)
     }
 }
 

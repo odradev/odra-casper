@@ -85,6 +85,7 @@ fn advance_block_time_by(seconds: u64) {
     ENV.with(|env| env.borrow_mut().advance_block_time_by(seconds))
 }
 
+/// Attaches amount of native token to the next contract call.
 #[no_mangle]
 pub fn with_tokens(amount: U512) {
     ENV.with(|env| {
@@ -92,12 +93,19 @@ pub fn with_tokens(amount: U512) {
     });
 }
 
+/// Returns the balance of the account associated with the given address.
 #[no_mangle]
 pub fn token_balance(address: OdraAddress) -> U512 {
-    U512::one()
+    let casper_address = CasperAddress::try_from(address).unwrap();
+    ENV.with(|env| {
+        env.borrow().get_account_cspr_balance(casper_address)
+    })
 }
 
+/// Returns the value that represents one CSPR.
+/// 
+/// 1 CSPR = 1,000,000,000 Motes.
 #[no_mangle]
 pub fn one_token() -> U512 {
-    U512::one()
+    U512::from(1_000_000_000)
 }
