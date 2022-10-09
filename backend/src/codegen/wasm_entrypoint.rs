@@ -27,14 +27,14 @@ impl ToTokens for WasmEntrypoint<'_> {
                     casper_backend::backend::set_attached_value(amount);
                 }
             },
-            _ => quote!()
+            _ => quote!(),
         };
 
         let payable_cleanup = match self.0.ty {
             odra::contract_def::EntrypointType::PublicPayable => quote! {
                 casper_backend::backend::clear_attached_value();
             },
-            _ => quote!()
+            _ => quote!(),
         };
 
         let contract_call = match self.0.ret {

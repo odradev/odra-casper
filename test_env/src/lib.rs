@@ -97,13 +97,11 @@ pub fn with_tokens(amount: U512) {
 #[no_mangle]
 pub fn token_balance(address: OdraAddress) -> U512 {
     let casper_address = CasperAddress::try_from(address).unwrap();
-    ENV.with(|env| {
-        env.borrow().token_balance(casper_address)
-    })
+    ENV.with(|env| env.borrow().token_balance(casper_address))
 }
 
 /// Returns the value that represents one CSPR.
-/// 
+///
 /// 1 CSPR = 1,000,000,000 Motes.
 #[no_mangle]
 pub fn one_token() -> U512 {

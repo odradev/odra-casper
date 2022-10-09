@@ -7,7 +7,7 @@ pub use casper_contract::{
     contract_api::{runtime, storage},
 };
 pub use casper_types;
-use casper_types::{U512, URef};
+use casper_types::{URef, U512};
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::casper_address::CasperAddress;
 
@@ -17,7 +17,7 @@ static mut ATTACHED_VALUE: U512 = U512::zero();
 
 /// Returns blocktime.
 #[no_mangle]
-pub  fn __get_block_time() -> u64 {
+pub fn __get_block_time() -> u64 {
     casper_env::get_block_time()
 }
 
@@ -82,7 +82,7 @@ pub fn __emit_event(event: &EventData) {
 }
 
 /// Returns the value that represents one CSPR.
-/// 
+///
 /// 1 CSPR = 1,000,000,000 Motes.
 #[no_mangle]
 pub fn __one_token() -> U512 {
@@ -133,7 +133,9 @@ pub fn get_main_purse() -> URef {
 
 /// Stores in memory the amount attached to the current call.
 pub fn set_attached_value(amount: U512) {
-    unsafe { ATTACHED_VALUE = amount; }
+    unsafe {
+        ATTACHED_VALUE = amount;
+    }
 }
 
 /// Zeroes the amount attached to the current call.

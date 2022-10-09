@@ -4,7 +4,8 @@ use std::{collections::BTreeMap, sync::Mutex};
 use casper_contract::{
     contract_api::{
         self, runtime,
-        storage::{self, dictionary_put}, system::{create_purse, get_purse_balance},
+        storage::{self, dictionary_put},
+        system::{create_purse, get_purse_balance},
     },
     unwrap_or_revert::UnwrapOrRevert,
 };
@@ -249,14 +250,12 @@ fn get_seed(name: &str) -> URef {
 
 pub(crate) fn get_or_create_purse() -> URef {
     match runtime::get_key(consts::MAIN_PURSE) {
-        Some(purse_key) => {
-            *purse_key.as_uref().unwrap_or_revert()
-        },
+        Some(purse_key) => *purse_key.as_uref().unwrap_or_revert(),
         None => {
             let purse = create_purse();
             runtime::put_key(consts::MAIN_PURSE, purse.into());
             purse
-        },
+        }
     }
 }
 
