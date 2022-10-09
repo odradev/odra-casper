@@ -16,15 +16,11 @@ use casper_types::{
 };
 
 use odra::types::EventData;
-use odra_casper_shared::casper_address::CasperAddress;
+use odra_casper_shared::{casper_address::CasperAddress, consts};
 
 lazy_static! {
     static ref SEEDS: Mutex<BTreeMap<String, URef>> = Mutex::new(BTreeMap::new());
 }
-
-const EVENTS: &str = "__events";
-const EVENTS_LENGTH: &str = "__events_length";
-const MAIN_PURSE: &str = "__main_purse";
 
 /// Save value to the storage.
 pub fn set_cl_value(name: &str, value: CLValue) {
@@ -123,10 +119,10 @@ pub fn self_address() -> CasperAddress {
 
 /// Record event to the contract's storage.
 pub fn emit_event(event: &EventData) {
-    let (events_length, key): (u32, URef) = match runtime::get_key(EVENTS_LENGTH) {
+    let (events_length, key): (u32, URef) = match runtime::get_key(consts::EVENTS_LENGTH) {
         None => {
             let key = storage::new_uref(0u32);
-            runtime::put_key(EVENTS_LENGTH, Key::from(key));
+            runtime::put_key(consts::EVENTS_LENGTH, Key::from(key));
             (0u32, key)
         }
         Some(value) => {
@@ -135,7 +131,7 @@ pub fn emit_event(event: &EventData) {
             (value, key)
         }
     };
-    let events_seed: URef = get_seed(EVENTS);
+    let events_seed: URef = get_seed(consts::EVENTS);
     dictionary_put(events_seed, &events_length.to_string(), event.clone());
     storage::write(key, events_length + 1);
 }
@@ -252,13 +248,13 @@ fn get_seed(name: &str) -> URef {
 }
 
 pub(crate) fn get_or_create_purse() -> URef {
-    match runtime::get_key(MAIN_PURSE) {
+    match runtime::get_key(consts::MAIN_PURSE) {
         Some(purse_key) => {
             *purse_key.as_uref().unwrap_or_revert()
         },
         None => {
             let purse = create_purse();
-            runtime::put_key(MAIN_PURSE, purse.into());
+            runtime::put_key(consts::MAIN_PURSE, purse.into());
             purse
         },
     }

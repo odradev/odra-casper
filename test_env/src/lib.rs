@@ -23,7 +23,7 @@ pub fn register_contract(name: &str, args: &RuntimeArgs) -> OdraAddress {
         let contract_package_hash = format!("{}_package_hash", name);
         let contract_package_hash = env
             .borrow()
-            .get_contract_package_hash(&contract_package_hash);
+            .contract_package_hash_from_name(&contract_package_hash);
         let casper_address: CasperAddress = contract_package_hash.into();
         OdraAddress::try_from(casper_address).unwrap()
     })
@@ -98,7 +98,7 @@ pub fn with_tokens(amount: U512) {
 pub fn token_balance(address: OdraAddress) -> U512 {
     let casper_address = CasperAddress::try_from(address).unwrap();
     ENV.with(|env| {
-        env.borrow().get_account_cspr_balance(casper_address)
+        env.borrow().token_balance(casper_address)
     })
 }
 
