@@ -37,7 +37,7 @@ pub fn get_cl_value(name: &str) -> Option<CLValue> {
     })
 }
 
-pub fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
+fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
     match runtime::get_key(name) {
         Some(key) => {
             let key_ref = key.try_into().unwrap_or_revert();
@@ -50,7 +50,7 @@ pub fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
     }
 }
 
-pub fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
+fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
     match runtime::get_key(name) {
         None => None,
         Some(value) => {
@@ -151,13 +151,13 @@ pub fn call_contract(
 ) -> Vec<u8> {
     let contract_package_hash = address.as_contract_package_hash().unwrap_or_revert();
     let contract_version: Option<ContractVersion> = None;
-
+    
     let (contract_package_hash_ptr, contract_package_hash_size, _bytes) =
-        to_ptr(*contract_package_hash);
+    to_ptr(*contract_package_hash);
     let (contract_version_ptr, contract_version_size, _bytes) = to_ptr(contract_version);
     let (entry_point_name_ptr, entry_point_name_size, _bytes) = to_ptr(entry_point);
     let (runtime_args_ptr, runtime_args_size, _bytes) = to_ptr(runtime_args);
-
+    
     let bytes_written = {
         let mut bytes_written = std::mem::MaybeUninit::uninit();
         let ret = unsafe {

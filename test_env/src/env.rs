@@ -278,8 +278,7 @@ impl CasperTestEnv {
         let main_purse_uref = contract
             .named_keys()
             .get(consts::MAIN_PURSE)
-            .unwrap()
-            .as_uref();
+            .and_then(|key| key.as_uref());
 
         match main_purse_uref {
             Some(purse) => self.context.get_purse_balance(*purse),

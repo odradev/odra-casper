@@ -33,11 +33,11 @@ fn call() {
     let attached_value: Option<U512> = runtime::get_named_arg("attached_value");
 
     if let Some(amount) = attached_value {
-        let purse = create_purse();
+        let cargo_purse = create_purse();
         let main_purse = get_main_purse();
-        let _ = transfer_from_purse_to_purse(main_purse, purse, amount, None);
+        let _ = transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None);
 
-        args.insert("purse", purse).unwrap_or_revert();
+        args.insert("cargo_purse", cargo_purse).unwrap_or_revert();
     }
     if has_return {
         let result: Vec<u8> =
