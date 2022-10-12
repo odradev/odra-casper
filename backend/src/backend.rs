@@ -14,7 +14,7 @@ use casper_types::{URef, U512};
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
 pub use odra_casper_shared::{casper_address::CasperAddress, consts};
 
-use crate::casper_env::{self, revert};
+use crate::casper_env;
 
 static mut ATTACHED_VALUE: U512 = U512::zero();
 
@@ -124,9 +124,7 @@ pub fn __transfer_tokens(to: OdraAddress, amount: U512) {
         CasperAddress::Account(account) => {
             transfer_from_purse_to_account(main_purse, account, amount, None).unwrap_or_revert();
         }
-        CasperAddress::Contract(_) => {
-            revert(1); // or call contract to get main purse
-        }
+        CasperAddress::Contract(_) => __revert(&ExecutionError::can_not_transfer_to_contract()),
     };
 }
 

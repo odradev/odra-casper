@@ -202,14 +202,14 @@ pub fn call_contract_with_amount(
     let cargo_purse = create_purse();
     let main_purse = get_or_create_purse();
 
-    let mut args = runtime_args.clone();
-    transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None).unwrap_or_revert();
+    let mut args = runtime_args;
+    transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None).unwrap_or_revert_with(ApiError::Transfer);
     args.insert(consts::CARGO_PURSE_ARG, cargo_purse)
         .unwrap_or_revert();
     let result = call_contract(address, entry_point, args);
 
     if !is_purse_empty(cargo_purse) {
-        revert(1); //
+        runtime::revert(ApiError::InvalidPurse)
     }
 
     result
@@ -221,6 +221,22 @@ pub fn get_block_time() -> u64 {
 
 pub fn revert(error: u16) -> ! {
     runtime::revert(ApiError::User(error))
+}
+
+pub fn get_or_create_purse() -> URef {
+    match runtime::get_key(consts::MAIN_PURSE) {
+        Some(purse_key) => *purse_key.as_uref().unwrap_or_revert(),
+        None => {
+            let purse = create_purse();
+            runtime::put_key(consts::MAIN_PURSE, purse.into());
+            purse
+        }
+    }
+}
+
+pub fn self_balance() -> U512 {
+    let purse = get_or_create_purse();
+    get_purse_balance(purse).unwrap_or_default()
 }
 
 // pub fn print(message: &str) {
@@ -268,22 +284,6 @@ fn get_seed(name: &str) -> URef {
             seed
         }
     }
-}
-
-pub(crate) fn get_or_create_purse() -> URef {
-    match runtime::get_key(consts::MAIN_PURSE) {
-        Some(purse_key) => *purse_key.as_uref().unwrap_or_revert(),
-        None => {
-            let purse = create_purse();
-            runtime::put_key(consts::MAIN_PURSE, purse.into());
-            purse
-        }
-    }
-}
-
-pub(crate) fn self_balance() -> U512 {
-    let purse = get_or_create_purse();
-    get_purse_balance(purse).unwrap_or_default()
 }
 
 fn is_purse_empty(purse: URef) -> bool {
