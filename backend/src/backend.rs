@@ -2,10 +2,12 @@
 //!
 //! It provides all the required functions to communicate between Odra and Casper.
 
-use casper_contract::{contract_api::system::transfer_from_purse_to_account, unwrap_or_revert::UnwrapOrRevert};
 pub use casper_contract::{
     self,
     contract_api::{runtime, storage},
+};
+use casper_contract::{
+    contract_api::system::transfer_from_purse_to_account, unwrap_or_revert::UnwrapOrRevert,
 };
 pub use casper_types;
 use casper_types::{URef, U512};
@@ -71,9 +73,14 @@ pub fn __revert(reason: &ExecutionError) -> ! {
 
 /// Call another contract.
 #[no_mangle]
-pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs, amount: Option<U512>) -> Vec<u8> {
+pub fn __call_contract(
+    address: &OdraAddress,
+    entrypoint: &str,
+    args: &RuntimeArgs,
+    amount: Option<U512>,
+) -> Vec<u8> {
     let casper_address = CasperAddress::try_from(*address).unwrap();
-    
+
     if let Some(amount) = amount {
         casper_env::call_contract_with_amount(casper_address, entrypoint, args.clone(), amount)
     } else {
@@ -112,11 +119,11 @@ pub fn __attached_value() -> U512 {
 pub fn __transfer_tokens(to: OdraAddress, amount: U512) {
     let casper_address = CasperAddress::try_from(to).unwrap();
     let main_purse = get_main_purse();
-    
+
     match casper_address {
         CasperAddress::Account(account) => {
             transfer_from_purse_to_account(main_purse, account, amount, None).unwrap_or_revert();
-        },
+        }
         CasperAddress::Contract(_) => {
             revert(1); // or call contract to get main purse
         }

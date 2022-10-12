@@ -204,7 +204,8 @@ pub fn call_contract_with_amount(
 
     let mut args = runtime_args.clone();
     transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None).unwrap_or_revert();
-    args.insert(consts::CARGO_PURSE_ARG, cargo_purse).unwrap_or_revert();
+    args.insert(consts::CARGO_PURSE_ARG, cargo_purse)
+        .unwrap_or_revert();
     let result = call_contract(address, entry_point, args);
 
     if !is_purse_empty(cargo_purse) {

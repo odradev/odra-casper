@@ -36,7 +36,7 @@ pub fn call_contract(
     entrypoint: &str,
     args: &RuntimeArgs,
     has_return: bool,
-    amount: Option<U512>
+    amount: Option<U512>,
 ) -> Option<Bytes> {
     ENV.with(|env| {
         let casper_address = CasperAddress::try_from(*addr).unwrap();
