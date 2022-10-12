@@ -36,10 +36,14 @@ pub fn call_contract(
     entrypoint: &str,
     args: &RuntimeArgs,
     has_return: bool,
+    amount: Option<U512>
 ) -> Option<Bytes> {
     ENV.with(|env| {
         let casper_address = CasperAddress::try_from(*addr).unwrap();
         let contract_package_hash = casper_address.as_contract_package_hash().unwrap();
+        if let Some(amount) = amount {
+            env.borrow_mut().attach_value(amount);
+        }
         env.borrow_mut().call_contract(
             *contract_package_hash,
             entrypoint,
@@ -83,14 +87,6 @@ pub fn get_event(address: &OdraAddress, index: i32) -> Result<EventData, EventEr
 #[no_mangle]
 fn advance_block_time_by(seconds: u64) {
     ENV.with(|env| env.borrow_mut().advance_block_time_by(seconds))
-}
-
-/// Attaches amount of native token to the next contract call.
-#[no_mangle]
-pub fn with_tokens(amount: U512) {
-    ENV.with(|env| {
-        env.borrow_mut().with_tokens(amount);
-    });
 }
 
 /// Returns the balance of the account associated with the given address.

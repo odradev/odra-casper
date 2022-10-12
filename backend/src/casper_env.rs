@@ -5,7 +5,7 @@ use casper_contract::{
     contract_api::{
         self, runtime,
         storage::{self, dictionary_put},
-        system::{create_purse, get_purse_balance},
+        system::{create_purse, get_purse_balance, transfer_from_purse_to_purse},
     },
     unwrap_or_revert::UnwrapOrRevert,
 };
@@ -151,13 +151,13 @@ pub fn call_contract(
 ) -> Vec<u8> {
     let contract_package_hash = address.as_contract_package_hash().unwrap_or_revert();
     let contract_version: Option<ContractVersion> = None;
-    
+
     let (contract_package_hash_ptr, contract_package_hash_size, _bytes) =
-    to_ptr(*contract_package_hash);
+        to_ptr(*contract_package_hash);
     let (contract_version_ptr, contract_version_size, _bytes) = to_ptr(contract_version);
     let (entry_point_name_ptr, entry_point_name_size, _bytes) = to_ptr(entry_point);
     let (runtime_args_ptr, runtime_args_size, _bytes) = to_ptr(runtime_args);
-    
+
     let bytes_written = {
         let mut bytes_written = std::mem::MaybeUninit::uninit();
         let ret = unsafe {
@@ -191,6 +191,27 @@ pub fn call_contract(
         read_host_buffer_into(&mut dest).unwrap_or_revert();
         dest
     }
+}
+
+pub fn call_contract_with_amount(
+    address: CasperAddress,
+    entry_point: &str,
+    runtime_args: RuntimeArgs,
+    amount: U512,
+) -> Vec<u8> {
+    let cargo_purse = create_purse();
+    let main_purse = get_or_create_purse();
+
+    let mut args = runtime_args.clone();
+    transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None).unwrap_or_revert();
+    args.insert(consts::CARGO_PURSE_ARG, cargo_purse).unwrap_or_revert();
+    let result = call_contract(address, entry_point, args);
+
+    if !is_purse_empty(cargo_purse) {
+        revert(1); //
+    }
+
+    result
 }
 
 pub fn get_block_time() -> u64 {
@@ -262,4 +283,10 @@ pub(crate) fn get_or_create_purse() -> URef {
 pub(crate) fn self_balance() -> U512 {
     let purse = get_or_create_purse();
     get_purse_balance(purse).unwrap_or_default()
+}
+
+fn is_purse_empty(purse: URef) -> bool {
+    get_purse_balance(purse)
+        .map(|balance| balance.is_zero())
+        .unwrap_or_else(|| true)
 }

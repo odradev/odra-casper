@@ -19,15 +19,11 @@ impl ToTokens for WasmEntrypoint<'_> {
 
         let payable = match self.0.ty {
             odra::contract_def::EntrypointType::PublicPayable => quote! {
-                let cargo_purse = casper_backend::backend::casper_contract::contract_api::runtime::get_named_arg("cargo_purse");
-                let amount = casper_backend::backend::casper_contract::contract_api::system::get_purse_balance(cargo_purse).unwrap_or_default();
-                if amount > odra::types::U512::zero() {
-                    let contract_purse = casper_backend::backend::get_main_purse();
-                    casper_backend::backend::casper_contract::contract_api::system::transfer_from_purse_to_purse(cargo_purse, contract_purse, amount, None);
-                    casper_backend::backend::set_attached_value(amount);
-                }
+                casper_backend::backend::handle_attached_value();
             },
-            _ => quote!(),
+            _ => quote! {
+                casper_backend::backend::assert_no_attached_value();
+            },
         };
 
         let payable_cleanup = match self.0.ty {

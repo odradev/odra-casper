@@ -246,7 +246,7 @@ impl CasperTestEnv {
     }
 
     /// Sets the value that will be attached to the next contract call.
-    pub fn with_tokens(&mut self, amount: U512) {
+    pub fn attach_value(&mut self, amount: U512) {
         self.attached_value = Some(amount);
     }
 
@@ -310,7 +310,11 @@ fn parse_error(err: engine_state::Error) -> OdraError {
                 OdraError::VmError(VmError::MissingArg)
             }
             CasperExecutionError::Revert(ApiError::User(id)) => {
-                OdraError::ExecutionError(ExecutionError::new(id, ""))
+                if id == ExecutionError::non_payable().code() {
+                    OdraError::ExecutionError(ExecutionError::non_payable())
+                } else {
+                    OdraError::ExecutionError(ExecutionError::new(id, ""))
+                }
             }
             CasperExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
             CasperExecutionError::MissingArgument { name: _ } => {

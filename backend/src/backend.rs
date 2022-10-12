@@ -2,6 +2,7 @@
 //!
 //! It provides all the required functions to communicate between Odra and Casper.
 
+use casper_contract::{contract_api::system::transfer_from_purse_to_account, unwrap_or_revert::UnwrapOrRevert};
 pub use casper_contract::{
     self,
     contract_api::{runtime, storage},
@@ -9,9 +10,9 @@ pub use casper_contract::{
 pub use casper_types;
 use casper_types::{URef, U512};
 use odra::types::{Address as OdraAddress, CLValue, EventData, ExecutionError, RuntimeArgs};
-pub use odra_casper_shared::casper_address::CasperAddress;
+pub use odra_casper_shared::{casper_address::CasperAddress, consts};
 
-use crate::casper_env;
+use crate::casper_env::{self, revert};
 
 static mut ATTACHED_VALUE: U512 = U512::zero();
 
@@ -70,9 +71,14 @@ pub fn __revert(reason: &ExecutionError) -> ! {
 
 /// Call another contract.
 #[no_mangle]
-pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs) -> Vec<u8> {
+pub fn __call_contract(address: &OdraAddress, entrypoint: &str, args: &RuntimeArgs, amount: Option<U512>) -> Vec<u8> {
     let casper_address = CasperAddress::try_from(*address).unwrap();
-    casper_env::call_contract(casper_address, entrypoint, args.clone())
+    
+    if let Some(amount) = amount {
+        casper_env::call_contract_with_amount(casper_address, entrypoint, args.clone(), amount)
+    } else {
+        casper_env::call_contract(casper_address, entrypoint, args.clone())
+    }
 }
 
 /// Emit event.
@@ -101,16 +107,20 @@ pub fn __attached_value() -> U512 {
     unsafe { ATTACHED_VALUE }
 }
 
-/// Attaches [amount] of native token to the next contract call.
-#[no_mangle]
-pub fn __with_tokens(amount: U512) {
-    unimplemented!()
-}
-
 /// Transfers native token from the contract caller to the given address.
 #[no_mangle]
 pub fn __transfer_tokens(to: OdraAddress, amount: U512) {
-    unimplemented!()
+    let casper_address = CasperAddress::try_from(to).unwrap();
+    let main_purse = get_main_purse();
+    
+    match casper_address {
+        CasperAddress::Account(account) => {
+            transfer_from_purse_to_account(main_purse, account, amount, None).unwrap_or_revert();
+        },
+        CasperAddress::Contract(_) => {
+            revert(1); // or call contract to get main purse
+        }
+    };
 }
 
 /// Checks if given named argument exists.
@@ -141,4 +151,35 @@ pub fn set_attached_value(amount: U512) {
 /// Zeroes the amount attached to the current call.
 pub fn clear_attached_value() {
     unsafe { ATTACHED_VALUE = U512::zero() }
+}
+
+/// Transfers attached value to the currently executing contract.
+pub fn handle_attached_value() {
+    if named_arg_exists(consts::CARGO_PURSE_ARG) {
+        let cargo_purse =
+            casper_contract::contract_api::runtime::get_named_arg(consts::CARGO_PURSE_ARG);
+        let amount = casper_contract::contract_api::system::get_purse_balance(cargo_purse);
+        if let Some(amount) = amount {
+            let contract_purse = get_main_purse();
+            let _ = casper_contract::contract_api::system::transfer_from_purse_to_purse(
+                cargo_purse,
+                contract_purse,
+                amount,
+                None,
+            );
+            set_attached_value(amount);
+        }
+    }
+}
+
+/// Reverts with an [ExecutionError] if some value is attached to the call.
+pub fn assert_no_attached_value() {
+    if named_arg_exists(consts::CARGO_PURSE_ARG) {
+        let cargo_purse =
+            casper_contract::contract_api::runtime::get_named_arg(consts::CARGO_PURSE_ARG);
+        let amount = casper_contract::contract_api::system::get_purse_balance(cargo_purse);
+        if amount.is_some() && !amount.unwrap().is_zero() {
+            __revert(&ExecutionError::non_payable());
+        }
+    }
 }
