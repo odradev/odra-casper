@@ -224,11 +224,11 @@ pub fn revert(error: u16) -> ! {
 }
 
 pub fn get_or_create_purse() -> URef {
-    match runtime::get_key(consts::MAIN_PURSE) {
+    match runtime::get_key(consts::CONTRACT_MAIN_PURSE) {
         Some(purse_key) => *purse_key.as_uref().unwrap_or_revert(),
         None => {
             let purse = create_purse();
-            runtime::put_key(consts::MAIN_PURSE, purse.into());
+            runtime::put_key(consts::CONTRACT_MAIN_PURSE, purse.into());
             purse
         }
     }

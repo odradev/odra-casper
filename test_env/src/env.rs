@@ -275,15 +275,12 @@ impl CasperTestEnv {
 
         let contract: Contract = self.context.get_contract(contract_hash).unwrap();
 
-        let main_purse_uref = contract
+        contract
             .named_keys()
-            .get(consts::MAIN_PURSE)
-            .and_then(|key| key.as_uref());
-
-        match main_purse_uref {
-            Some(purse) => self.context.get_purse_balance(*purse),
-            None => U512::zero(),
-        }
+            .get(consts::CONTRACT_MAIN_PURSE)
+            .and_then(|key| key.as_uref())
+            .map(|purse| self.context.get_purse_balance(*purse))
+            .unwrap_or_else(|| U512::zero())
     }
 
     fn get_account_cspr_balance(&self, account_hash: AccountHash) -> U512 {
