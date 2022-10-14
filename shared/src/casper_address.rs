@@ -74,7 +74,7 @@ impl TryFrom<Key> for CasperAddress {
             Key::Hash(contract_package_hash) => Ok(CasperAddress::Contract(
                 ContractPackageHash::new(contract_package_hash),
             )),
-            _ => Err(String::from("Unsupport Key type.")),
+            _ => Err(String::from("Unsupported Key type.")),
         }
     }
 }

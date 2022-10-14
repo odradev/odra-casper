@@ -5,6 +5,7 @@ use casper_contract::{
     contract_api::{
         self, runtime,
         storage::{self, dictionary_put},
+        system::{create_purse, get_purse_balance, transfer_from_purse_to_purse},
     },
     unwrap_or_revert::UnwrapOrRevert,
 };
@@ -12,18 +13,15 @@ use casper_types::{
     api_error,
     bytesrepr::{Bytes, FromBytes, ToBytes},
     system::CallStackElement,
-    ApiError, CLTyped, CLValue, ContractVersion, Key, RuntimeArgs, URef,
+    ApiError, CLTyped, CLValue, ContractVersion, Key, RuntimeArgs, URef, U512,
 };
 
 use odra::types::EventData;
-use odra_casper_shared::casper_address::CasperAddress;
+use odra_casper_shared::{casper_address::CasperAddress, consts};
 
 lazy_static! {
     static ref SEEDS: Mutex<BTreeMap<String, URef>> = Mutex::new(BTreeMap::new());
 }
-
-const EVENTS: &str = "__events";
-const EVENTS_LENGTH: &str = "__events_length";
 
 /// Save value to the storage.
 pub fn set_cl_value(name: &str, value: CLValue) {
@@ -39,7 +37,7 @@ pub fn get_cl_value(name: &str) -> Option<CLValue> {
     })
 }
 
-pub fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
+fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
     match runtime::get_key(name) {
         Some(key) => {
             let key_ref = key.try_into().unwrap_or_revert();
@@ -52,7 +50,7 @@ pub fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
     }
 }
 
-pub fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
+fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
     match runtime::get_key(name) {
         None => None,
         Some(value) => {
@@ -122,10 +120,10 @@ pub fn self_address() -> CasperAddress {
 
 /// Record event to the contract's storage.
 pub fn emit_event(event: &EventData) {
-    let (events_length, key): (u32, URef) = match runtime::get_key(EVENTS_LENGTH) {
+    let (events_length, key): (u32, URef) = match runtime::get_key(consts::EVENTS_LENGTH) {
         None => {
             let key = storage::new_uref(0u32);
-            runtime::put_key(EVENTS_LENGTH, Key::from(key));
+            runtime::put_key(consts::EVENTS_LENGTH, Key::from(key));
             (0u32, key)
         }
         Some(value) => {
@@ -134,7 +132,7 @@ pub fn emit_event(event: &EventData) {
             (value, key)
         }
     };
-    let events_seed: URef = get_seed(EVENTS);
+    let events_seed: URef = get_seed(consts::EVENTS);
     dictionary_put(events_seed, &events_length.to_string(), event.clone());
     storage::write(key, events_length + 1);
 }
@@ -195,12 +193,50 @@ pub fn call_contract(
     }
 }
 
+pub fn call_contract_with_amount(
+    address: CasperAddress,
+    entry_point: &str,
+    runtime_args: RuntimeArgs,
+    amount: U512,
+) -> Vec<u8> {
+    let cargo_purse = create_purse();
+    let main_purse = get_or_create_purse();
+
+    let mut args = runtime_args;
+    transfer_from_purse_to_purse(main_purse, cargo_purse, amount, None).unwrap_or_revert_with(ApiError::Transfer);
+    args.insert(consts::CARGO_PURSE_ARG, cargo_purse)
+        .unwrap_or_revert();
+    let result = call_contract(address, entry_point, args);
+
+    if !is_purse_empty(cargo_purse) {
+        runtime::revert(ApiError::InvalidPurse)
+    }
+
+    result
+}
+
 pub fn get_block_time() -> u64 {
     u64::from(runtime::get_blocktime())
 }
 
 pub fn revert(error: u16) -> ! {
     runtime::revert(ApiError::User(error))
+}
+
+pub fn get_or_create_purse() -> URef {
+    match runtime::get_key(consts::CONTRACT_MAIN_PURSE) {
+        Some(purse_key) => *purse_key.as_uref().unwrap_or_revert(),
+        None => {
+            let purse = create_purse();
+            runtime::put_key(consts::CONTRACT_MAIN_PURSE, purse.into());
+            purse
+        }
+    }
+}
+
+pub fn self_balance() -> U512 {
+    let purse = get_or_create_purse();
+    get_purse_balance(purse).unwrap_or_default()
 }
 
 // pub fn print(message: &str) {
@@ -248,4 +284,10 @@ fn get_seed(name: &str) -> URef {
             seed
         }
     }
+}
+
+fn is_purse_empty(purse: URef) -> bool {
+    get_purse_balance(purse)
+        .map(|balance| balance.is_zero())
+        .unwrap_or_else(|| true)
 }

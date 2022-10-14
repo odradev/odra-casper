@@ -2,3 +2,4 @@
 */Cargo.lock
 test_env/getter_proxy/target
 test_env/getter_proxy/Cargo.lock
+.vscode

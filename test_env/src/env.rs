@@ -12,21 +12,18 @@ use casper_execution_engine::core::engine_state::{
 };
 pub use casper_execution_engine::core::execution::Error as CasperExecutionError;
 use casper_types::{
-    account::AccountHash,
+    account::{Account, AccountHash},
     bytesrepr::{Bytes, FromBytes, ToBytes},
-    runtime_args, ApiError, CLTyped, ContractHash, ContractPackageHash, Key, Motes, PublicKey,
-    RuntimeArgs, SecretKey, URef, U512,
+    runtime_args, ApiError, CLTyped, Contract, ContractHash, ContractPackageHash, Key, Motes,
+    PublicKey, RuntimeArgs, SecretKey, URef, U512,
 };
 use odra::types::{event::EventError, EventData, ExecutionError, OdraError, VmError};
-use odra_casper_shared::casper_address::CasperAddress;
+use odra_casper_shared::{casper_address::CasperAddress, consts};
 
 thread_local! {
     /// Thread local instance of [CasperTestEnv].
     pub static ENV: RefCell<CasperTestEnv> = RefCell::new(CasperTestEnv::new());
 }
-
-const EVENTS: &str = "__events";
-const EVENTS_LENGTH: &str = "__events_length";
 
 /// Wrapper for InMemoryWasmTestBuilder.
 pub struct CasperTestEnv {
@@ -36,6 +33,7 @@ pub struct CasperTestEnv {
     block_time: u64,
     calls_counter: u32,
     error: Option<OdraError>,
+    attached_value: Option<U512>,
 }
 
 impl CasperTestEnv {
@@ -77,6 +75,7 @@ impl CasperTestEnv {
             block_time: 0,
             calls_counter: 0,
             error: None,
+            attached_value: None,
         }
     }
 
@@ -114,7 +113,9 @@ impl CasperTestEnv {
             "contract_package_hash" => hash,
             "entry_point" => entry_point,
             "args" => Bytes::from(args_bytes),
-            "has_return" => has_return
+            "has_return" => has_return,
+            "attached_value" => self.attached_value,
+            "amount" => self.attached_value.unwrap_or_default(),
         };
 
         let deploy_item = DeployItemBuilder::new()
@@ -131,6 +132,7 @@ impl CasperTestEnv {
         self.context.exec(execute_request).commit();
 
         let active_account = self.active_account_hash();
+        self.attached_value = None;
 
         if self.context.is_error() {
             self.error = Some(parse_error(self.context.get_error().unwrap()));
@@ -145,10 +147,6 @@ impl CasperTestEnv {
     /// Set caller.
     pub fn set_caller(&mut self, account: CasperAddress) {
         self.active_account = account;
-    }
-
-    fn active_account_hash(&self) -> AccountHash {
-        *self.active_account.as_account_hash().unwrap()
     }
 
     /// Get one of the predefined accounts.
@@ -178,7 +176,7 @@ impl CasperTestEnv {
     }
 
     /// Read a ContractPackageHash of a given name, from the active account.
-    pub fn get_contract_package_hash(&self, name: &str) -> ContractPackageHash {
+    pub fn contract_package_hash_from_name(&self, name: &str) -> ContractPackageHash {
         let account = self
             .context
             .get_account(self.active_account_hash())
@@ -196,19 +194,14 @@ impl CasperTestEnv {
     pub fn get_event(&self, address: CasperAddress, index: i32) -> Result<EventData, EventError> {
         let address = address.as_contract_package_hash().unwrap();
 
-        let contract_hash: ContractHash = self
-            .context
-            .get_contract_package(*address)
-            .unwrap()
-            .current_contract_hash()
-            .unwrap();
+        let contract_hash: ContractHash = self.get_contract_package_hash(*address);
 
         let dictionary_seed_uref: URef = *self
             .context
             .get_contract(contract_hash)
             .unwrap()
             .named_keys()
-            .get(EVENTS)
+            .get(consts::EVENTS)
             .unwrap()
             .as_uref()
             .unwrap();
@@ -218,7 +211,7 @@ impl CasperTestEnv {
             .query(
                 None,
                 Key::Hash(contract_hash.value()),
-                &[String::from(EVENTS_LENGTH)],
+                &[String::from(consts::EVENTS_LENGTH)],
             )
             .unwrap()
             .as_cl_value()
@@ -251,6 +244,54 @@ impl CasperTestEnv {
     pub fn advance_block_time_by(&mut self, seconds: u64) {
         self.block_time += seconds;
     }
+
+    /// Sets the value that will be attached to the next contract call.
+    pub fn attach_value(&mut self, amount: U512) {
+        self.attached_value = Some(amount);
+    }
+
+    /// Returns the balance of the given account.
+    ///
+    /// The accepted value can be either an [CasperAddress::Account] or [CasperAddress::Contract].
+    pub fn token_balance(&self, address: CasperAddress) -> U512 {
+        match address {
+            CasperAddress::Account(account_hash) => self.get_account_cspr_balance(account_hash),
+            CasperAddress::Contract(contract_hash) => self.get_contract_cspr_balance(contract_hash),
+        }
+    }
+}
+
+impl CasperTestEnv {
+    fn get_contract_package_hash(&self, contract_hash: ContractPackageHash) -> ContractHash {
+        self.context
+            .get_contract_package(contract_hash)
+            .unwrap()
+            .current_contract_hash()
+            .unwrap()
+    }
+
+    fn get_contract_cspr_balance(&self, contract_hash: ContractPackageHash) -> U512 {
+        let contract_hash: ContractHash = self.get_contract_package_hash(contract_hash);
+
+        let contract: Contract = self.context.get_contract(contract_hash).unwrap();
+
+        contract
+            .named_keys()
+            .get(consts::CONTRACT_MAIN_PURSE)
+            .and_then(|key| key.as_uref())
+            .map(|purse| self.context.get_purse_balance(*purse))
+            .unwrap_or_else(|| U512::zero())
+    }
+
+    fn get_account_cspr_balance(&self, account_hash: AccountHash) -> U512 {
+        let account: Account = self.context.get_account(account_hash).unwrap();
+        let purse = account.main_purse();
+        self.context.get_purse_balance(purse)
+    }
+
+    fn active_account_hash(&self) -> AccountHash {
+        *self.active_account.as_account_hash().unwrap()
+    }
 }
 
 impl Default for CasperTestEnv {
@@ -266,7 +307,11 @@ fn parse_error(err: engine_state::Error) -> OdraError {
                 OdraError::VmError(VmError::MissingArg)
             }
             CasperExecutionError::Revert(ApiError::User(id)) => {
-                OdraError::ExecutionError(ExecutionError::new(id, ""))
+                if id == ExecutionError::non_payable().code() {
+                    OdraError::ExecutionError(ExecutionError::non_payable())
+                } else {
+                    OdraError::ExecutionError(ExecutionError::new(id, ""))
+                }
             }
             CasperExecutionError::InvalidContext => OdraError::VmError(VmError::InvalidContext),
             CasperExecutionError::MissingArgument { name: _ } => {
